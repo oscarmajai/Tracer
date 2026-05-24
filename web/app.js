@@ -3,7 +3,7 @@
 // ── Settings ──────────────────────────────────────────────────────────────────
 
 const DEFAULTS = {
-    apiUrl:   'http://localhost:3000',
+    apiUrl:   window.location.origin,
     apiToken: 'TracerSecretToken123',
 };
 
@@ -31,6 +31,7 @@ async function apiFetch(path, options = {}) {
             ...(options.headers || {}),
         },
     });
+    if (res.status === 404) return null;
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     if (res.status === 204) return null;
     return res.json();
@@ -164,10 +165,14 @@ async function refresh() {
             apiFetch('/api/location/latest'),
             apiFetch('/api/location/history?limit=100'),
         ]);
-        updateDeviceInfo(latest);
-        updateMap(latest, history);
         setStatus(true);
         setLastUpdate();
+        if (latest) {
+            updateDeviceInfo(latest);
+            updateMap(latest, history || []);
+        } else {
+            document.getElementById('statusText').textContent = 'En línea – esperando primer ping';
+        }
     } catch (err) {
         setStatus(false);
         console.warn('Refresh error:', err.message);
