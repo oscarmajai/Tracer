@@ -15,10 +15,16 @@ services:
     networks:
       - internal
     healthcheck:
+<<<<<<< HEAD
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/"]
       interval: 30s
+=======
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/ > /dev/null 2>&1"]
+      interval: 15s
+>>>>>>> 8bbed06 (Se quitaron los datos de cdmx)
       timeout: 5s
-      retries: 3
+      retries: 5
+      start_period: 10s
 
   nginx:
     image: nginx:alpine

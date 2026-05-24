@@ -3,7 +3,11 @@
 // ── Settings ──────────────────────────────────────────────────────────────────
 
 const DEFAULTS = {
+<<<<<<< HEAD
     apiUrl:   window.location.origin,
+=======
+    apiUrl:   '',
+>>>>>>> 8bbed06 (Se quitaron los datos de cdmx)
     apiToken: 'TracerSecretToken123',
 };
 
