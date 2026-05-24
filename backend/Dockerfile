@@ -1,7 +1,7 @@
 # --- Etapa 1: Compilación ---
 # El build context debe ser la raíz del proyecto (Tracer/):
 #   docker build -f backend/Dockerfile -t tracer-api .
-FROM golang:1.22-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
 RUN apk add --no-cache build-base
 
