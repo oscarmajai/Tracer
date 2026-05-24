@@ -43,8 +43,7 @@ interface TracerApiService {
     ): retrofit2.Response<Unit>
 
     companion object {
-        // Cambiar a la IP/dominio real del servidor antes de instalar en el dispositivo.
-        // En emulador: http://10.0.2.2:3000/
+
         const val BASE_URL = "https://tracer.oscarmajai.dev/"
         const val AUTH_TOKEN = "48364d38877807ad7b13c66bf0d2be4f6b2e478f12487aff62a8e5db76837ca9"
 
