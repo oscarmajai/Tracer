@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracer — Panel</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+    <span class="brand">Tracer</span>
+    <div class="status-bar">
+        <span id="statusDot" class="dot"></span>
+        <span id="statusText">Conectando…</span>
+    </div>
+    <span id="lastUpdate" class="last-update">–</span>
+</header>
+
+<div class="layout">
+
+    <aside class="sidebar">
+
+        <section class="card">
+            <h3>Dispositivo</h3>
+            <div class="info-grid">
+                <span class="lbl">Batería</span>
+                <span id="battery">–</span>
+
+                <span class="lbl">Última señal</span>
+                <span id="timestamp">–</span>
+
+                <span class="lbl">Posición</span>
+                <a id="coordsLink" href="#" target="_blank" rel="noopener">–</a>
+            </div>
+        </section>
+
+        <section class="card" id="photoSection" style="display:none">
+            <h3>Última foto</h3>
+            <img id="latestPhoto" alt="Foto capturada" style="width:100%;border-radius:4px;display:none">
+            <p id="photoTimestamp" class="photo-ts"></p>
+        </section>
+
+        <section class="card">
+            <h3>Comandos</h3>
+            <div class="cmds">
+                <button class="btn"        data-cmd="LOCATE">Locate</button>
+                <button class="btn"        data-cmd="BATTERY">Battery</button>
+                <button class="btn"        data-cmd="STATUS">Status</button>
+                <button class="btn accent" data-cmd="ALERT" data-args="ON">Alert ON</button>
+                <button class="btn"        data-cmd="ALERT" data-args="OFF">Alert OFF</button>
+                <button class="btn warn"   data-cmd="RING">Ring</button>
+                <button class="btn"        data-cmd="RING"  data-args="STOP">Ring Stop</button>
+                <button class="btn"        data-cmd="PHOTO">Photo</button>
+                <button class="btn danger" data-cmd="LOCK"  data-confirm="true">Lock</button>
+                <button class="btn danger" data-cmd="WIPE"  data-wipe="true">Wipe</button>
+            </div>
+            <p id="cmdFeedback" class="feedback"></p>
+        </section>
+
+        <section class="card">
+            <h3>Configuración</h3>
+            <div class="settings-form">
+                <label for="apiUrl">API URL</label>
+                <input id="apiUrl" type="url" placeholder="http://localhost:3000" autocomplete="off">
+                <label for="apiToken">Token</label>
+                <input id="apiToken" type="password" placeholder="TracerSecretToken123" autocomplete="off">
+                <button id="btnSave" class="btn accent">Guardar y reconectar</button>
+            </div>
+        </section>
+
+    </aside>
+
+    <main id="map"></main>
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

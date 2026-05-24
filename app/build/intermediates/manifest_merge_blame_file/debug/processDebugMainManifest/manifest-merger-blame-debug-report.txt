@@ -1,0 +1,159 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.tracer.app"
+4    android:versionCode="1"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="26"
+9        android:targetSdkVersion="34" />
+10
+11    <!-- Permisos de red y ubicación -->
+12    <uses-permission android:name="android.permission.INTERNET" />
+12-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:6:5-67
+12-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:6:22-64
+13    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+13-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:7:5-79
+13-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:7:22-76
+14    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+14-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:8:5-81
+14-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:8:22-78
+15    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+15-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:9:5-85
+15-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:9:22-82
+16    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+16-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:10:5-77
+16-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:10:22-74
+17    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+17-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:11:5-86
+17-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:11:22-83
+18    <uses-permission android:name="android.permission.BATTERY_STATS" />
+18-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:12:5-72
+18-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:12:22-69
+19    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+19-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:13:5-81
+19-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:13:22-78
+20
+21    <permission
+21-->[androidx.core:core:1.12.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/91c3c29101984f4be5167b1a61b1f3a3/transformed/core-1.12.0/AndroidManifest.xml:22:5-24:47
+22        android:name="com.tracer.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+22-->[androidx.core:core:1.12.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/91c3c29101984f4be5167b1a61b1f3a3/transformed/core-1.12.0/AndroidManifest.xml:23:9-81
+23        android:protectionLevel="signature" />
+23-->[androidx.core:core:1.12.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/91c3c29101984f4be5167b1a61b1f3a3/transformed/core-1.12.0/AndroidManifest.xml:24:9-44
+24
+25    <uses-permission android:name="com.tracer.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+25-->[androidx.core:core:1.12.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/91c3c29101984f4be5167b1a61b1f3a3/transformed/core-1.12.0/AndroidManifest.xml:26:5-97
+25-->[androidx.core:core:1.12.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/91c3c29101984f4be5167b1a61b1f3a3/transformed/core-1.12.0/AndroidManifest.xml:26:22-94
+26
+27    <application
+27-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:15:5-52:19
+28        android:name="com.tracer.app.TracerApp"
+28-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:16:9-34
+29        android:allowBackup="false"
+29-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:17:9-36
+30        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+30-->[androidx.core:core:1.12.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/91c3c29101984f4be5167b1a61b1f3a3/transformed/core-1.12.0/AndroidManifest.xml:28:18-86
+31        android:debuggable="true"
+32        android:extractNativeLibs="false"
+33        android:icon="@mipmap/ic_launcher"
+33-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:18:9-43
+34        android:label="@string/app_name"
+34-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:19:9-41
+35        android:roundIcon="@mipmap/ic_launcher_round"
+35-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:20:9-54
+36        android:supportsRtl="true"
+36-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:21:9-35
+37        android:theme="@style/Theme.AppCompat.Light.NoActionBar" >
+37-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:22:9-65
+38        <activity
+38-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:24:9-31:20
+39            android:name="com.tracer.app.MainActivity"
+39-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:25:13-41
+40            android:exported="true" >
+40-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:26:13-36
+41            <intent-filter>
+41-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:27:13-30:29
+42                <action android:name="android.intent.action.MAIN" />
+42-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:28:17-69
+42-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:28:25-66
+43
+44                <category android:name="android.intent.category.LAUNCHER" />
+44-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:29:17-77
+44-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:29:27-74
+45            </intent-filter>
+46        </activity>
+47
+48        <!-- Foreground Service con tipo de ubicación declarado -->
+49        <service
+49-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:34:9-39:44
+50            android:name="com.tracer.app.service.TracerLocationService"
+50-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:35:13-58
+51            android:enabled="true"
+51-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:36:13-35
+52            android:exported="false"
+52-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:37:13-37
+53            android:foregroundServiceType="location"
+53-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:38:13-53
+54            android:stopWithTask="false" />
+54-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:39:13-41
+55
+56        <!-- Receptor para reinicio automático tras arranque del dispositivo -->
+57        <receiver
+57-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:42:9-50:20
+58            android:name="com.tracer.app.BootReceiver"
+58-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:43:13-41
+59            android:enabled="true"
+59-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:44:13-35
+60            android:exported="true" >
+60-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:45:13-36
+61            <intent-filter>
+61-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:46:13-49:29
+62                <action android:name="android.intent.action.BOOT_COMPLETED" />
+62-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:47:17-79
+62-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:47:25-76
+63                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+63-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:48:17-84
+63-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:48:25-81
+64            </intent-filter>
+65        </receiver>
+66
+67        <activity
+67-->[com.google.android.gms:play-services-base:18.1.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/40a9f647ba4719d1f5f9b43cb1306bf4/transformed/play-services-base-18.1.0/AndroidManifest.xml:20:9-22:45
+68            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+68-->[com.google.android.gms:play-services-base:18.1.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/40a9f647ba4719d1f5f9b43cb1306bf4/transformed/play-services-base-18.1.0/AndroidManifest.xml:20:19-85
+69            android:exported="false"
+69-->[com.google.android.gms:play-services-base:18.1.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/40a9f647ba4719d1f5f9b43cb1306bf4/transformed/play-services-base-18.1.0/AndroidManifest.xml:22:19-43
+70            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+70-->[com.google.android.gms:play-services-base:18.1.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/40a9f647ba4719d1f5f9b43cb1306bf4/transformed/play-services-base-18.1.0/AndroidManifest.xml:21:19-78
+71
+72        <meta-data
+72-->[com.google.android.gms:play-services-basement:18.1.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/8b51c5d9891d68a28051d743815b6f60/transformed/play-services-basement-18.1.0/AndroidManifest.xml:21:9-23:69
+73            android:name="com.google.android.gms.version"
+73-->[com.google.android.gms:play-services-basement:18.1.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/8b51c5d9891d68a28051d743815b6f60/transformed/play-services-basement-18.1.0/AndroidManifest.xml:22:13-58
+74            android:value="@integer/google_play_services_version" />
+74-->[com.google.android.gms:play-services-basement:18.1.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/8b51c5d9891d68a28051d743815b6f60/transformed/play-services-basement-18.1.0/AndroidManifest.xml:23:13-66
+75
+76        <provider
+76-->[androidx.emoji2:emoji2:1.2.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/d5eddf5ad166b0aa97d2e1def09c138e/transformed/emoji2-1.2.0/AndroidManifest.xml:24:9-32:20
+77            android:name="androidx.startup.InitializationProvider"
+77-->[androidx.emoji2:emoji2:1.2.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/d5eddf5ad166b0aa97d2e1def09c138e/transformed/emoji2-1.2.0/AndroidManifest.xml:25:13-67
+78            android:authorities="com.tracer.app.androidx-startup"
+78-->[androidx.emoji2:emoji2:1.2.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/d5eddf5ad166b0aa97d2e1def09c138e/transformed/emoji2-1.2.0/AndroidManifest.xml:26:13-68
+79            android:exported="false" >
+79-->[androidx.emoji2:emoji2:1.2.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/d5eddf5ad166b0aa97d2e1def09c138e/transformed/emoji2-1.2.0/AndroidManifest.xml:27:13-37
+80            <meta-data
+80-->[androidx.emoji2:emoji2:1.2.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/d5eddf5ad166b0aa97d2e1def09c138e/transformed/emoji2-1.2.0/AndroidManifest.xml:29:13-31:52
+81                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+81-->[androidx.emoji2:emoji2:1.2.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/d5eddf5ad166b0aa97d2e1def09c138e/transformed/emoji2-1.2.0/AndroidManifest.xml:30:17-75
+82                android:value="androidx.startup" />
+82-->[androidx.emoji2:emoji2:1.2.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/d5eddf5ad166b0aa97d2e1def09c138e/transformed/emoji2-1.2.0/AndroidManifest.xml:31:17-49
+83            <meta-data
+83-->[androidx.lifecycle:lifecycle-process:2.4.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/486772fa1a6d481fece24e6aced8a760/transformed/lifecycle-process-2.4.1/AndroidManifest.xml:31:13-33:52
+84                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+84-->[androidx.lifecycle:lifecycle-process:2.4.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/486772fa1a6d481fece24e6aced8a760/transformed/lifecycle-process-2.4.1/AndroidManifest.xml:32:17-78
+85                android:value="androidx.startup" />
+85-->[androidx.lifecycle:lifecycle-process:2.4.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/486772fa1a6d481fece24e6aced8a760/transformed/lifecycle-process-2.4.1/AndroidManifest.xml:33:17-49
+86        </provider>
+87    </application>
+88
+89</manifest>

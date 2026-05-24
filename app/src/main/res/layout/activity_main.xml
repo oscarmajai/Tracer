@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="32dp"
+    android:background="#FAFAFA">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tracer"
+        android:textSize="36sp"
+        android:textStyle="bold"
+        android:textColor="#212121"
+        android:layout_marginBottom="4dp" />
+
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="● Servicio activo"
+        android:textColor="#4CAF50"
+        android:textSize="14sp"
+        android:layout_marginBottom="40dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="PIN de comandos SMS"
+        android:textSize="12sp"
+        android:textColor="#757575"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/etPin"
+        android:layout_width="160dp"
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:textSize="28sp"
+        android:gravity="center"
+        android:maxLength="8"
+        android:layout_marginBottom="12dp" />
+
+    <Button
+        android:id="@+id/btnSavePin"
+        android:layout_width="160dp"
+        android:layout_height="wrap_content"
+        android:text="Guardar PIN"
+        android:layout_marginBottom="40dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Comandos disponibles"
+        android:textSize="12sp"
+        android:textColor="#757575"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="PIN LOCATE\nPIN ALERT ON|OFF\nPIN RING [STOP]\nPIN BATTERY\nPIN STATUS\nPIN LOCK"
+        android:fontFamily="monospace"
+        android:textSize="13sp"
+        android:textColor="#424242"
+        android:lineSpacingExtra="4dp"
+        android:layout_marginBottom="32dp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#E0E0E0"
+        android:layout_marginBottom="24dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Número de confianza (alertas SIM)"
+        android:textSize="12sp"
+        android:textColor="#757575"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/etTrustedNumber"
+        android:layout_width="220dp"
+        android:layout_height="wrap_content"
+        android:inputType="phone"
+        android:hint="+52 55 1234 5678"
+        android:gravity="center"
+        android:layout_marginBottom="12dp" />
+
+    <Button
+        android:id="@+id/btnSaveTrustedNumber"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Guardar número"
+        android:layout_marginBottom="32dp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#E0E0E0"
+        android:layout_marginBottom="24dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Bloqueo remoto (LOCK)"
+        android:textSize="12sp"
+        android:textColor="#757575"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/tvAdminStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="● No activado"
+        android:textColor="#F44336"
+        android:layout_marginBottom="12dp" />
+
+    <Button
+        android:id="@+id/btnActivateAdmin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Activar permisos de admin"
+        android:visibility="visible" />
+
+</LinearLayout>

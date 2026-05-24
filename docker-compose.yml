@@ -1,0 +1,42 @@
+services:
+
+  tracer-api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: always
+    environment:
+      - TRACER_API_TOKEN=${TRACER_API_TOKEN}
+      - TRACER_DB_FILE=/data/telemetry.db
+      - TRACER_PHOTOS_DIR=/data/photos
+      - PORT=3000
+    volumes:
+      - tracer-data:/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  nginx:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "80:80"          # Cloudflare tunnel → localhost:80 → nginx → tracer-api:3000
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      tracer-api:
+        condition: service_healthy
+    networks:
+      - internal
+
+volumes:
+  tracer-data:
+    driver: local
+
+networks:
+  internal:
+    driver: bridge
