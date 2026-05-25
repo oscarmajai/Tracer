@@ -7,8 +7,10 @@
     <title>Tracer</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <link rel="stylesheet" href="style.css">
+    <style>[x-cloak]{display:none!important}</style>
+    <script defer src="https://unpkg.com/alpinejs@3.14.9/dist/cdn.min.js"></script>
 </head>
-<body>
+<body x-data>
 
 <div class="layout">
 
@@ -18,7 +20,10 @@
         <div class="sidebar-top">
             <div class="sidebar-top-row">
                 <span class="brand">Tracer</span>
-                <button id="btnNotif" class="btn-notif" title="Activar notificaciones">
+                <button class="btn-notif"
+                        :class="{'active': $store.tracer.notifGranted}"
+                        :title="$store.tracer.notifGranted ? 'Notificaciones activas' : 'Activar notificaciones'"
+                        @click="$store.tracer.requestNotifications()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                          fill="none" stroke="currentColor" stroke-width="2"
                          stroke-linecap="round" stroke-linejoin="round">
@@ -29,7 +34,7 @@
             </div>
         </div>
 
-        <button class="btn-locate" data-cmd="LOCATE">
+        <button class="btn-locate" @click="$store.tracer.sendCmd('LOCATE')">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
                  fill="none" stroke="currentColor" stroke-width="2.5"
                  stroke-linecap="round" stroke-linejoin="round">
@@ -41,7 +46,7 @@
 
         <div class="cmd-grid">
 
-            <button class="cmd-btn" data-cmd="BATTERY">
+            <button class="cmd-btn" @click="$store.tracer.sendCmd('BATTERY')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                      fill="none" stroke="currentColor" stroke-width="1.8"
                      stroke-linecap="round" stroke-linejoin="round">
@@ -52,7 +57,7 @@
                 <small class="cmd-desc">Ver nivel actual</small>
             </button>
 
-            <button class="cmd-btn" data-cmd="STATUS">
+            <button class="cmd-btn" @click="$store.tracer.sendCmd('STATUS')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                      fill="none" stroke="currentColor" stroke-width="1.8"
                      stroke-linecap="round" stroke-linejoin="round">
@@ -64,29 +69,31 @@
                 <small class="cmd-desc">Resumen del sistema</small>
             </button>
 
-            <button class="cmd-btn" id="btnAlert" data-state="off">
+            <button class="cmd-btn" :class="{'active': $store.tracer.alertActive}"
+                    @click="$store.tracer.toggleAlert()">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                      fill="none" stroke="currentColor" stroke-width="1.8"
                      stroke-linecap="round" stroke-linejoin="round">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
                     <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
                 </svg>
-                <span>Alerta</span>
-                <small class="cmd-desc">Activar modo alerta</small>
+                <span x-text="$store.tracer.alertActive ? 'Alerta activa' : 'Alerta'"></span>
+                <small class="cmd-desc" x-text="$store.tracer.alertActive ? 'Desactivar alerta' : 'Activar modo alerta'"></small>
             </button>
 
-            <button class="cmd-btn" id="btnRing" data-state="off">
+            <button class="cmd-btn" :class="{'active': $store.tracer.ringActive}"
+                    @click="$store.tracer.toggleRing()">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                      fill="none" stroke="currentColor" stroke-width="1.8"
                      stroke-linecap="round" stroke-linejoin="round">
                     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
                     <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
                 </svg>
-                <span>Sonar</span>
-                <small class="cmd-desc">Activar timbre 30s</small>
+                <span x-text="$store.tracer.ringActive ? 'Sonando' : 'Sonar'"></span>
+                <small class="cmd-desc" x-text="$store.tracer.ringActive ? 'Detener timbre' : 'Activar timbre 30s'"></small>
             </button>
 
-            <button class="cmd-btn" data-cmd="PHOTO">
+            <button class="cmd-btn" @click="$store.tracer.sendCmd('PHOTO')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                      fill="none" stroke="currentColor" stroke-width="1.8"
                      stroke-linecap="round" stroke-linejoin="round">
@@ -97,7 +104,7 @@
                 <small class="cmd-desc">Capturar con cámara</small>
             </button>
 
-            <button class="cmd-btn" id="btnLock">
+            <button class="cmd-btn" @click="$store.tracer.openModal('lock')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                      fill="none" stroke="currentColor" stroke-width="1.8"
                      stroke-linecap="round" stroke-linejoin="round">
@@ -108,7 +115,7 @@
                 <small class="cmd-desc">Bloquear + mensaje</small>
             </button>
 
-            <button class="cmd-btn" id="btnCallback">
+            <button class="cmd-btn" @click="$store.tracer.openModal('callback')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                      fill="none" stroke="currentColor" stroke-width="1.8"
                      stroke-linecap="round" stroke-linejoin="round">
@@ -118,7 +125,7 @@
                 <small class="cmd-desc">Llamada de retorno</small>
             </button>
 
-            <button class="cmd-btn" data-cmd="ENABLE_WIFI" data-confirm="true">
+            <button class="cmd-btn" @click="$store.tracer.sendCmdConfirm('ENABLE_WIFI')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                      fill="none" stroke="currentColor" stroke-width="1.8"
                      stroke-linecap="round" stroke-linejoin="round">
@@ -131,7 +138,7 @@
                 <small class="cmd-desc">Activar WiFi</small>
             </button>
 
-            <button class="cmd-btn" data-cmd="ENABLE_DATA" data-confirm="true">
+            <button class="cmd-btn" @click="$store.tracer.sendCmdConfirm('ENABLE_DATA')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                      fill="none" stroke="currentColor" stroke-width="1.8"
                      stroke-linecap="round" stroke-linejoin="round">
@@ -142,7 +149,7 @@
                 <small class="cmd-desc">Activar datos móviles</small>
             </button>
 
-            <button class="cmd-btn" id="btnResetPin">
+            <button class="cmd-btn" @click="$store.tracer.openModal('resetPin')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                      fill="none" stroke="currentColor" stroke-width="1.8"
                      stroke-linecap="round" stroke-linejoin="round">
@@ -154,19 +161,20 @@
                 <small class="cmd-desc">Resetear PIN/patrón</small>
             </button>
 
-            <button class="cmd-btn" id="btnKeyguard" data-state="off">
+            <button class="cmd-btn" :class="{'active': $store.tracer.keyguardActive}"
+                    @click="$store.tracer.toggleKeyguard()">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                      fill="none" stroke="currentColor" stroke-width="1.8"
                      stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                 </svg>
-                <span>Restricción</span>
-                <small class="cmd-desc">Deshabilitar accesos en bloqueo</small>
+                <span x-text="$store.tracer.keyguardActive ? 'Restringido' : 'Restricción'"></span>
+                <small class="cmd-desc" x-text="$store.tracer.keyguardActive ? 'Restaurar accesos' : 'Deshabilitar accesos en bloqueo'"></small>
             </button>
 
         </div>
 
-        <button class="btn-wipe" id="btnWipe">
+        <button class="btn-wipe" @click="$store.tracer.openModal('wipe')">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
                  fill="none" stroke="currentColor" stroke-width="2.5"
                  stroke-linecap="round" stroke-linejoin="round">
@@ -177,13 +185,13 @@
             Borrar datos
         </button>
 
-        <p id="cmdFeedback" class="feedback"></p>
+        <p class="feedback" :class="$store.tracer.feedbackMod" x-text="$store.tracer.feedbackText"></p>
 
     </aside>
 
     <main id="map"></main>
 
-    <!-- Panel derecho: info, historial, fotos -->
+    <!-- Panel derecho -->
     <aside class="sidebar-right">
 
         <div class="device-card">
@@ -196,12 +204,13 @@
                 </svg>
             </div>
             <div class="device-meta">
-                <p id="deviceName" class="device-name">—</p>
-                <p id="deviceModel" class="device-model">—</p>
+                <p class="device-name" x-text="$store.tracer.deviceName"></p>
+                <p class="device-model" x-text="$store.tracer.deviceModel"></p>
                 <div class="device-status-row">
-                    <span id="statusDot" class="status-dot"></span>
-                    <span id="statusText" class="status-text connecting">Conectando…</span>
-                    <span id="lastSeen" class="last-seen"></span>
+                    <span class="status-dot" :class="$store.tracer.statusDotClass"></span>
+                    <span class="status-text" :class="$store.tracer.statusTextClass"
+                          x-text="$store.tracer.statusLabel"></span>
+                    <span class="last-seen" x-text="$store.tracer.lastSeen"></span>
                 </div>
             </div>
         </div>
@@ -217,7 +226,8 @@
                     </svg>
                     <span>BATERÍA</span>
                 </div>
-                <p id="batteryValue" class="stat-value">—</p>
+                <p class="stat-value" x-text="$store.tracer.battery"
+                   :style="'color:' + $store.tracer.batteryColor"></p>
             </div>
             <div class="stat-card">
                 <div class="stat-label-row">
@@ -231,15 +241,17 @@
                     </svg>
                     <span>SEÑAL</span>
                 </div>
-                <p id="signalValue" class="stat-value">—</p>
+                <p class="stat-value" x-text="$store.tracer.signal"></p>
             </div>
         </div>
 
-        <div id="alertBanner" class="alert-banner"></div>
+        <div class="alert-banner" :class="{'visible': $store.tracer.alertBannerVisible}"
+             x-text="$store.tracer.alertBannerText"></div>
 
         <!-- Command Log -->
-        <div class="history-section">
-            <button class="history-header" id="cmdLogToggle">
+        <div class="history-section" :class="{'collapsed': !$store.tracer.cmdLogOpen}">
+            <button class="history-header"
+                    @click="$store.tracer.cmdLogOpen = !$store.tracer.cmdLogOpen">
                 <div class="history-header-left">
                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
                          fill="none" stroke="currentColor" stroke-width="2"
@@ -254,14 +266,30 @@
                     <polyline points="18 15 12 9 6 15"/>
                 </svg>
             </button>
-            <ul id="cmdLogList" class="history-list">
-                <li class="history-empty">Sin comandos</li>
+            <ul class="history-list" x-show="$store.tracer.cmdLogOpen">
+                <template x-if="$store.tracer.cmdLog.length === 0">
+                    <li class="history-empty">Sin comandos</li>
+                </template>
+                <template x-for="cmd in $store.tracer.cmdLog" :key="cmd.id">
+                    <li class="cmd-log-item">
+                        <span class="cmd-badge"
+                              :class="cmd.status === 'executed' ? 'executed' : 'pending'"
+                              x-text="cmd.command"></span>
+                        <div class="cmd-log-text">
+                            <small x-text="cmd.ts + (cmd.args ? ' · ' + cmd.args : '')"></small>
+                            <p class="cmd-log-result"
+                               :style="!cmd.result && cmd.status === 'pending' ? 'color:var(--subtext-lt)' : ''"
+                               x-text="cmd.result || (cmd.status === 'pending' ? 'Esperando…' : '')"></p>
+                        </div>
+                    </li>
+                </template>
             </ul>
         </div>
 
         <!-- Location History -->
-        <div class="history-section">
-            <button class="history-header" id="historyToggle">
+        <div class="history-section" :class="{'collapsed': !$store.tracer.historyOpen}">
+            <button class="history-header"
+                    @click="$store.tracer.historyOpen = !$store.tracer.historyOpen">
                 <div class="history-header-left">
                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
                          fill="none" stroke="currentColor" stroke-width="2"
@@ -277,14 +305,31 @@
                     <polyline points="18 15 12 9 6 15"/>
                 </svg>
             </button>
-            <ul id="historyList" class="history-list">
-                <li class="history-empty">Cargando…</li>
+            <ul class="history-list" x-show="$store.tracer.historyOpen">
+                <template x-if="$store.tracer.historyItems.length === 0">
+                    <li class="history-empty"
+                        x-text="$store.tracer.historyLoading ? 'Cargando…' : 'Sin ubicaciones aún'"></li>
+                </template>
+                <template x-for="(item, i) in $store.tracer.historyItems" :key="i">
+                    <li class="history-item" @click="tracerFlyTo(item.lat, item.lon)">
+                        <div class="history-dot-wrap">
+                            <div class="history-dot" :class="{'current': i === 0}"></div>
+                            <div class="history-connector"
+                                 x-show="i < $store.tracer.historyItems.length - 1"></div>
+                        </div>
+                        <div class="history-text">
+                            <strong x-text="item.name" :title="item.name"></strong>
+                            <small x-text="(item.sub ? item.sub + ' · ' : '') + item.ts"></small>
+                        </div>
+                    </li>
+                </template>
             </ul>
         </div>
 
         <!-- Geofence -->
-        <div class="history-section collapsed">
-            <button class="history-header" id="geofenceToggle">
+        <div class="history-section" :class="{'collapsed': !$store.tracer.geofenceOpen}">
+            <button class="history-header"
+                    @click="$store.tracer.geofenceOpen = !$store.tracer.geofenceOpen">
                 <div class="history-header-left">
                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
                          fill="none" stroke="currentColor" stroke-width="2"
@@ -304,20 +349,30 @@
                     <polyline points="18 15 12 9 6 15"/>
                 </svg>
             </button>
-            <div id="geofenceBody" class="geofence-body hidden">
-                <p id="geofenceStatus" class="geofence-status">Sin zona configurada</p>
+            <div class="geofence-body" x-show="$store.tracer.geofenceOpen">
+                <p class="geofence-status" :class="$store.tracer.geofenceStatusClass"
+                   x-text="$store.tracer.geofenceStatus"></p>
                 <label for="geofenceRadius">Radio (m)</label>
-                <input id="geofenceRadius" type="number" min="50" max="50000" value="500" placeholder="500">
+                <input id="geofenceRadius" type="number" min="50" max="50000"
+                       x-model.number="$store.tracer.geofenceRadius"
+                       @input="tracerGeofenceRadiusChange()">
                 <div class="geofence-actions">
-                    <button id="btnGeofencePick" class="btn-geo-pick">Marcar en mapa</button>
-                    <button id="btnGeofenceSave" class="btn-geo-save" disabled>Guardar</button>
+                    <button class="btn-geo-pick"
+                            :class="{'active': $store.tracer.geofenceDrawMode}"
+                            x-text="$store.tracer.geofenceDrawMode ? 'Cancelar' : 'Marcar en mapa'"
+                            @click="tracerGeofencePick()"></button>
+                    <button class="btn-geo-save"
+                            :disabled="$store.tracer.geofenceSaveDisabled"
+                            @click="tracerGeofenceSave()">Guardar</button>
                 </div>
-                <button id="btnGeofenceDelete" class="btn-geo-delete" style="display:none">Eliminar zona</button>
+                <button class="btn-geo-delete"
+                        x-show="$store.tracer.geofenceDeleteVisible"
+                        @click="tracerGeofenceDelete()">Eliminar zona</button>
             </div>
         </div>
 
         <!-- Fotos -->
-        <section id="photoSection" class="photo-section" style="display:none">
+        <section class="photo-section" x-show="$store.tracer.photosVisible" x-cloak>
             <div class="photo-header">
                 <p class="section-label">Fotos</p>
                 <button id="btnPhotoGallery" class="btn-photo-gallery" style="display:none">Ver más</button>
@@ -327,81 +382,106 @@
         </section>
 
     </aside>
-
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="app.js"></script>
 
 <!-- Modal: Llamada de retorno -->
-<div id="modalCallback" class="modal-overlay hidden">
+<div class="modal-overlay" x-show="$store.tracer.modal === 'callback'"
+     @click.self="$store.tracer.modal = null" x-cloak>
     <div class="modal-card">
         <p class="modal-title">Llamada de retorno</p>
         <p class="modal-desc">El dispositivo llamará al número que indiques.</p>
-        <label for="callbackNumber">Número de teléfono</label>
-        <input id="callbackNumber" type="tel" placeholder="+52 55 1234 5678" autocomplete="off">
+        <label>Número de teléfono</label>
+        <input type="tel" x-model="$store.tracer.callbackNumber"
+               placeholder="+52 55 1234 5678" autocomplete="off"
+               @keydown.enter="$store.tracer.confirmCallback()"
+               @keydown.escape="$store.tracer.modal = null">
         <div class="modal-actions">
-            <button class="modal-btn-cancel" id="modalCallbackCancel">Cancelar</button>
-            <button class="modal-btn-confirm" id="modalCallbackConfirm">Llamar</button>
+            <button class="modal-btn-cancel" @click="$store.tracer.modal = null">Cancelar</button>
+            <button class="modal-btn-confirm" @click="$store.tracer.confirmCallback()">Llamar</button>
         </div>
     </div>
 </div>
 
 <!-- Modal: Bloqueo con mensaje -->
-<div id="modalLock" class="modal-overlay hidden">
+<div class="modal-overlay" x-show="$store.tracer.modal === 'lock'"
+     @click.self="$store.tracer.modal = null" x-cloak>
     <div class="modal-card">
         <p class="modal-title">Bloquear pantalla</p>
         <p class="modal-desc">Escribe el mensaje que aparecerá en la pantalla de bloqueo. Puedes dejarlo vacío.</p>
-        <label for="lockMessage">Mensaje (opcional)</label>
-        <input id="lockMessage" type="text" placeholder="Este dispositivo ha sido reportado" autocomplete="off">
+        <label>Mensaje (opcional)</label>
+        <input type="text" x-model="$store.tracer.lockMessage"
+               placeholder="Este dispositivo ha sido reportado" autocomplete="off"
+               @keydown.enter="$store.tracer.confirmLock()"
+               @keydown.escape="$store.tracer.modal = null">
         <div class="modal-actions">
-            <button class="modal-btn-cancel" id="modalLockCancel">Cancelar</button>
-            <button class="modal-btn-confirm danger" id="modalLockConfirm">Bloquear</button>
-        </div>
-    </div>
-</div>
-
-<!-- Login overlay — visible hasta que se verifique el token -->
-<div id="loginOverlay" class="login-overlay">
-    <div class="login-card">
-        <p class="login-brand">Tracer</p>
-        <p class="login-sub">Panel de control</p>
-        <div class="login-form">
-            <label for="loginUsername">Usuario</label>
-            <input id="loginUsername" type="text" placeholder="admin" autocomplete="username">
-            <label for="loginPassword">Contraseña</label>
-            <input id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password">
-            <p id="loginError" class="login-error"></p>
-            <button id="loginBtn" class="btn-login">Entrar</button>
+            <button class="modal-btn-cancel" @click="$store.tracer.modal = null">Cancelar</button>
+            <button class="modal-btn-confirm danger" @click="$store.tracer.confirmLock()">Bloquear</button>
         </div>
     </div>
 </div>
 
 <!-- Modal: Cambiar PIN -->
-<div id="modalResetPin" class="modal-overlay hidden">
+<div class="modal-overlay" x-show="$store.tracer.modal === 'resetPin'"
+     @click.self="$store.tracer.modal = null" x-cloak>
     <div class="modal-card">
         <p class="modal-title">Cambiar PIN de pantalla</p>
         <p class="modal-desc">El dispositivo cambiará su PIN de desbloqueo al valor indicado. Funciona sin PIN previo o en Android ≤6.</p>
-        <label for="newPin">Nuevo PIN (mín. 4 dígitos)</label>
-        <input id="newPin" type="password" inputmode="numeric" placeholder="••••" maxlength="16" autocomplete="new-password">
+        <label>Nuevo PIN (mín. 4 dígitos)</label>
+        <input type="password" x-model="$store.tracer.newPin"
+               inputmode="numeric" placeholder="••••" maxlength="16" autocomplete="new-password"
+               @keydown.enter="$store.tracer.confirmResetPin()"
+               @keydown.escape="$store.tracer.modal = null">
         <div class="modal-actions">
-            <button class="modal-btn-cancel" id="modalResetPinCancel">Cancelar</button>
-            <button class="modal-btn-confirm danger" id="modalResetPinConfirm">Cambiar PIN</button>
+            <button class="modal-btn-cancel" @click="$store.tracer.modal = null">Cancelar</button>
+            <button class="modal-btn-confirm danger" @click="$store.tracer.confirmResetPin()">Cambiar PIN</button>
         </div>
     </div>
 </div>
 
-<!-- Modal: Borrar datos (requiere contraseña) -->
-<div id="modalWipe" class="modal-overlay hidden">
+<!-- Modal: Borrar datos -->
+<div class="modal-overlay" x-show="$store.tracer.modal === 'wipe'"
+     @click.self="$store.tracer.modal = null" x-cloak>
     <div class="modal-card">
         <p class="modal-title">⚠️ Borrar todos los datos</p>
         <p class="modal-desc">Esta acción es <strong>IRREVERSIBLE</strong>. El dispositivo volverá a configuración de fábrica. Confirma tu contraseña para continuar.</p>
-        <label for="wipePassword">Contraseña</label>
-        <input id="wipePassword" type="password" placeholder="••••••••" autocomplete="current-password">
-        <p id="wipeError" class="login-error"></p>
+        <label>Contraseña</label>
+        <input type="password" x-model="$store.tracer.wipePassword"
+               placeholder="••••••••" autocomplete="current-password"
+               @keydown.enter="$store.tracer.confirmWipe()"
+               @keydown.escape="$store.tracer.modal = null">
+        <p class="login-error" x-text="$store.tracer.wipeError"></p>
         <div class="modal-actions">
-            <button class="modal-btn-cancel" id="modalWipeCancel">Cancelar</button>
-            <button class="modal-btn-confirm danger" id="modalWipeConfirm">Borrar datos</button>
+            <button class="modal-btn-cancel" @click="$store.tracer.modal = null">Cancelar</button>
+            <button class="modal-btn-confirm danger"
+                    :disabled="$store.tracer.wipeLoading"
+                    x-text="$store.tracer.wipeLoading ? 'Verificando…' : 'Borrar datos'"
+                    @click="$store.tracer.confirmWipe()"></button>
+        </div>
+    </div>
+</div>
+
+<!-- Login overlay -->
+<div class="login-overlay" x-show="!$store.tracer.loggedIn" x-cloak>
+    <div class="login-card">
+        <p class="login-brand">Tracer</p>
+        <p class="login-sub">Panel de control</p>
+        <div class="login-form">
+            <label>Usuario</label>
+            <input type="text" x-model="$store.tracer.loginUsername"
+                   placeholder="admin" autocomplete="username"
+                   @keydown.enter="$store.tracer.doLogin()">
+            <label>Contraseña</label>
+            <input type="password" x-model="$store.tracer.loginPassword"
+                   placeholder="••••••••" autocomplete="current-password"
+                   @keydown.enter="$store.tracer.doLogin()">
+            <p class="login-error" x-text="$store.tracer.loginError"></p>
+            <button class="btn-login"
+                    :disabled="$store.tracer.loginLoading"
+                    x-text="$store.tracer.loginLoading ? 'Conectando…' : 'Entrar'"
+                    @click="$store.tracer.doLogin()"></button>
         </div>
     </div>
 </div>
