@@ -41,8 +41,8 @@ html, body, #root {
 
 .sidebar-left,
 .sidebar-right {
-    flex: 0 0 auto;
-    min-height: 0;
+    flex-shrink: 0;
+    height: 100vh;
     overflow-y: auto;
     background: var(--sidebar);
     display: flex;
@@ -318,6 +318,8 @@ html, body, #root {
     list-style: none;
     background: #fff;
     padding: 4px 0 6px;
+    max-height: 174px; /* ~3 items */
+    overflow-y: auto;
 }
 
 .history-empty {
