@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTracer } from '../TracerContext';
 import { relativeTime } from '../helpers';
 
@@ -238,39 +239,67 @@ function Geofence() {
   );
 }
 
-// ── Photos ────────────────────────────────────────────────────────────────────
+// ── Photo Modal ───────────────────────────────────────────────────────────────
 
-function Photos() {
-  const { photos, showOldPhotos, setShowOldPhotos } = useTracer();
+function PhotoModal({ photos, onClose }) {
+  return (
+    <div
+      className="photo-modal-overlay"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="photo-modal">
+        <div className="photo-modal-header">
+          <p className="photo-modal-title">Galería de fotos</p>
+          <button className="photo-modal-close" onClick={onClose}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div className="photo-modal-body">
+          {photos.length === 0 ? (
+            <p className="photo-modal-empty">Sin fotos disponibles</p>
+          ) : (
+            <div className="photo-grid">
+              {photos.map((p, i) => (
+                <div key={i} className="photo-grid-item">
+                  <img src={p.blobUrl} alt="Foto capturada" />
+                  <p className="photo-grid-ts">{relativeTime(p.timestamp)}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Photos button ─────────────────────────────────────────────────────────────
+
+function PhotosButton() {
+  const { photos } = useTracer();
+  const [open, setOpen] = useState(false);
+
   if (photos.length === 0) return null;
 
-  const [latest, ...older] = photos;
-
   return (
-    <section className="photo-section">
-      <div className="photo-header">
-        <p className="section-label">Fotos</p>
-        {older.length > 0 && (
-          <button className="btn-photo-gallery" onClick={() => setShowOldPhotos((v) => !v)}>
-            {showOldPhotos ? 'Ver menos' : 'Ver más'}
-          </button>
-        )}
-      </div>
-      <div>
-        <img src={latest.blobUrl} alt="Foto capturada" style={{ width: '100%', borderRadius: 5, display: 'block' }} />
-        <p className="photo-gallery-ts">{relativeTime(latest.timestamp)}</p>
-      </div>
-      {showOldPhotos && older.length > 0 && (
-        <div className="photo-gallery-old">
-          {older.map((p, i) => (
-            <div key={i} className="photo-gallery-old-item">
-              <img src={p.blobUrl} alt="Foto capturada" />
-              <p className="photo-gallery-ts">{relativeTime(p.timestamp)}</p>
-            </div>
-          ))}
+    <>
+      <button className="btn-photos" onClick={() => setOpen(true)}>
+        <div className="btn-photos-left">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+            <circle cx="12" cy="13" r="4" />
+          </svg>
+          <span>Fotos</span>
         </div>
-      )}
-    </section>
+        <span className="photos-badge">{photos.length}</span>
+      </button>
+      {open && <PhotoModal photos={photos} onClose={() => setOpen(false)} />}
+    </>
   );
 }
 
@@ -285,7 +314,7 @@ export default function SidebarRight() {
       <CommandLog />
       <LocationHistory />
       <Geofence />
-      <Photos />
+      <PhotosButton />
     </aside>
   );
 }
