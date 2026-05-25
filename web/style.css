@@ -41,30 +41,26 @@ html, body {
 
 /* ── Sidebars ── */
 
-.sidebar-left {
-    width: 220px;
-    min-width: 220px;
+.sidebar-left,
+.sidebar-right {
+    flex: 0 0 auto;
     min-height: 0;
-    background: var(--sidebar);
-    border-right: 1px solid var(--border);
     overflow-y: auto;
+    background: var(--sidebar);
     display: flex;
     flex-direction: column;
     gap: 8px;
     padding: 12px 10px 20px;
 }
 
+.sidebar-left {
+    width: 220px;
+    border-right: 1px solid var(--border);
+}
+
 .sidebar-right {
     width: 248px;
-    min-width: 248px;
-    min-height: 0;
-    background: var(--sidebar);
     border-left: 1px solid var(--border);
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 12px 10px 20px;
 }
 
 .sidebar-top {
@@ -445,7 +441,8 @@ html, body {
 /* ── Map ── */
 
 #map {
-    flex: 1;
+    flex: 1 1 0;
+    min-width: 0;
     height: 100vh;
 }
 
