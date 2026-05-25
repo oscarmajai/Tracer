@@ -6,6 +6,8 @@ services:
       dockerfile: backend/Dockerfile
     restart: always
     environment:
+      - TRACER_USERNAME=${TRACER_USERNAME}
+      - TRACER_PASSWORD=${TRACER_PASSWORD}
       - TRACER_API_TOKEN=${TRACER_API_TOKEN}
       - TRACER_DB_FILE=/data/telemetry.db
       - TRACER_PHOTOS_DIR=/data/photos

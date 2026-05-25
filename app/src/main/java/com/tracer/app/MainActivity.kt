@@ -62,6 +62,10 @@ class MainActivity : ComponentActivity() {
 
     private val callPermLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
+    ) { requestNotificationPermissions() }
+
+    private val notifPermLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
     ) { requestCameraPermissions() }
 
     private val cameraPermLauncher = registerForActivityResult(
@@ -334,8 +338,21 @@ class MainActivity : ComponentActivity() {
     private fun requestCallPermissions() {
         val missing = arrayOf(Manifest.permission.CALL_PHONE)
             .filter { ContextCompat.checkSelfPermission(this, it) != PERMISSION_GRANTED }
-        if (missing.isEmpty()) requestCameraPermissions()
+        if (missing.isEmpty()) requestNotificationPermissions()
         else callPermLauncher.launch(missing.toTypedArray())
+    }
+
+    private fun requestNotificationPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val granted = ContextCompat.checkSelfPermission(
+                this, Manifest.permission.POST_NOTIFICATIONS
+            ) == PERMISSION_GRANTED
+            if (!granted) {
+                notifPermLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                return
+            }
+        }
+        requestCameraPermissions()
     }
 
     private fun requestCameraPermissions() {

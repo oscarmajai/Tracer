@@ -27,6 +27,8 @@ type Config struct {
 	DBFile    string
 	PhotosDir string
 	Port      string
+	Username  string
+	Password  string
 }
 
 var (
@@ -41,6 +43,8 @@ func loadConfig() Config {
 		DBFile:    getEnv("TRACER_DB_FILE", "./telemetry.db"),
 		PhotosDir: getEnv("TRACER_PHOTOS_DIR", "./photos"),
 		Port:      getEnv("PORT", "3000"),
+		Username:  getEnv("TRACER_USERNAME", "admin"),
+		Password:  getEnv("TRACER_PASSWORD", "tracer1234"),
 	}
 }
 
@@ -261,7 +265,21 @@ func startWriteWorker() {
 	}()
 }
 
-// ── Auth middleware ───────────────────────────────────────────────────────────
+// ── Auth ──────────────────────────────────────────────────────────────────────
+
+func postLogin(c *fiber.Ctx) error {
+	var body struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid body"})
+	}
+	if body.Username != cfg.Username || body.Password != cfg.Password {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "invalid credentials"})
+	}
+	return c.JSON(fiber.Map{"token": cfg.APIToken})
+}
 
 func authMiddleware(c *fiber.Ctx) error {
 	if c.Get("Authorization") != "Bearer "+cfg.APIToken {
@@ -732,6 +750,9 @@ func main() {
 		return fiber.ErrUpgradeRequired
 	})
 	app.Get("/ws", fiberws.New(handleWS))
+
+	// Login público (sin auth)
+	app.Post("/api/login", postLogin)
 
 	// REST API autenticada
 	api := app.Group("/api", authMiddleware)

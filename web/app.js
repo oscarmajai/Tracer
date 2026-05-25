@@ -9,14 +9,16 @@ const DEFAULTS = {
 
 function getSettings() {
     return {
-        apiUrl:   localStorage.getItem('tracer_url')   || DEFAULTS.apiUrl,
-        apiToken: localStorage.getItem('tracer_token') || DEFAULTS.apiToken,
+        apiUrl:      localStorage.getItem('tracer_url')      || DEFAULTS.apiUrl,
+        apiToken:    localStorage.getItem('tracer_token')    || DEFAULTS.apiToken,
+        apiUsername: localStorage.getItem('tracer_username') || '',
     };
 }
 
-function persistSettings(url, token) {
+function persistSettings(url, token, username) {
     localStorage.setItem('tracer_url',   url.replace(/\/$/, ''));
     localStorage.setItem('tracer_token', token);
+    if (username !== undefined) localStorage.setItem('tracer_username', username);
 }
 
 // ── API ───────────────────────────────────────────────────────────────────────
@@ -752,18 +754,6 @@ function bindEvents() {
         btn.addEventListener('click', () => {
             const cmd  = btn.dataset.cmd;
             const args = btn.dataset.args || '';
-            if (btn.dataset.wipe === 'true') {
-                if (!confirm('⚠️ ¿Borrar TODOS los datos del dispositivo?\nEsta acción es IRREVERSIBLE.')) return;
-                if (!confirm('SEGUNDA CONFIRMACIÓN\n¿Ejecutar restablecimiento de fábrica?')) return;
-                sendCommand('WIPE', 'CONFIRM');
-                return;
-            }
-            if (cmd === 'LOCK') {
-                const msg = prompt('Mensaje en pantalla de bloqueo (opcional):') || '';
-                if (!confirm('¿Bloquear la pantalla del dispositivo?')) return;
-                sendCommand('LOCK', msg.trim());
-                return;
-            }
             if (btn.dataset.confirm === 'true') {
                 if (!confirm(`¿Ejecutar ${cmd}?\nEsta acción no se puede deshacer.`)) return;
             }
@@ -771,15 +761,93 @@ function bindEvents() {
         });
     });
 
+    // Modal: Llamada de retorno
+    document.getElementById('btnCallback').addEventListener('click', () => {
+        document.getElementById('callbackNumber').value = '';
+        document.getElementById('modalCallback').classList.remove('hidden');
+        setTimeout(() => document.getElementById('callbackNumber').focus(), 50);
+    });
+    document.getElementById('modalCallbackCancel').addEventListener('click', () => {
+        document.getElementById('modalCallback').classList.add('hidden');
+    });
+    document.getElementById('modalCallbackConfirm').addEventListener('click', () => {
+        const num = document.getElementById('callbackNumber').value.trim();
+        if (!num) { document.getElementById('callbackNumber').focus(); return; }
+        document.getElementById('modalCallback').classList.add('hidden');
+        sendCommand('CALLBACK', num);
+    });
+    document.getElementById('callbackNumber').addEventListener('keydown', e => {
+        if (e.key === 'Enter')  document.getElementById('modalCallbackConfirm').click();
+        if (e.key === 'Escape') document.getElementById('modalCallback').classList.add('hidden');
+    });
+    document.getElementById('modalCallback').addEventListener('click', e => {
+        if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
+    });
+
+    // Modal: Bloqueo con mensaje
+    document.getElementById('btnLock').addEventListener('click', () => {
+        document.getElementById('lockMessage').value = '';
+        document.getElementById('modalLock').classList.remove('hidden');
+        setTimeout(() => document.getElementById('lockMessage').focus(), 50);
+    });
+    document.getElementById('modalLockCancel').addEventListener('click', () => {
+        document.getElementById('modalLock').classList.add('hidden');
+    });
+    document.getElementById('modalLockConfirm').addEventListener('click', () => {
+        const msg = document.getElementById('lockMessage').value.trim();
+        document.getElementById('modalLock').classList.add('hidden');
+        sendCommand('LOCK', msg);
+    });
+    document.getElementById('lockMessage').addEventListener('keydown', e => {
+        if (e.key === 'Enter')  document.getElementById('modalLockConfirm').click();
+        if (e.key === 'Escape') document.getElementById('modalLock').classList.add('hidden');
+    });
+    document.getElementById('modalLock').addEventListener('click', e => {
+        if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
+    });
+
+    // Modal: Cambiar PIN
+    document.getElementById('btnResetPin').addEventListener('click', () => {
+        document.getElementById('newPin').value = '';
+        document.getElementById('modalResetPin').classList.remove('hidden');
+        setTimeout(() => document.getElementById('newPin').focus(), 50);
+    });
+    document.getElementById('modalResetPinCancel').addEventListener('click', () => {
+        document.getElementById('modalResetPin').classList.add('hidden');
+    });
+    document.getElementById('modalResetPinConfirm').addEventListener('click', () => {
+        const pin = document.getElementById('newPin').value.trim();
+        if (pin.length < 4) { document.getElementById('newPin').focus(); return; }
+        document.getElementById('modalResetPin').classList.add('hidden');
+        sendCommand('RESET_PIN', pin);
+    });
+    document.getElementById('newPin').addEventListener('keydown', e => {
+        if (e.key === 'Enter')  document.getElementById('modalResetPinConfirm').click();
+        if (e.key === 'Escape') document.getElementById('modalResetPin').classList.add('hidden');
+    });
+    document.getElementById('modalResetPin').addEventListener('click', e => {
+        if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
+    });
+
+    // Toggle: Restricción de pantalla de bloqueo (KEYGUARD)
+    const btnKG = document.getElementById('btnKeyguard');
+    btnKG.addEventListener('click', () => {
+        const on = btnKG.dataset.state !== 'on';
+        btnKG.dataset.state = on ? 'on' : 'off';
+        sendCommand(on ? 'KEYGUARD_ON' : 'KEYGUARD_OFF');
+        btnKG.classList.toggle('active', on);
+        btnKG.querySelector('span').textContent = on ? 'Restringido' : 'Restricción';
+        btnKG.querySelector('.cmd-desc').textContent = on ? 'Restaurar accesos' : 'Deshabilitar accesos en bloqueo';
+    });
+
     document.getElementById('btnSave').addEventListener('click', () => {
-        const url   = document.getElementById('apiUrl').value.trim();
-        const token = document.getElementById('apiToken').value.trim();
+        const url = document.getElementById('apiUrl').value.trim();
         if (!url) return;
-        persistSettings(url, token);
+        localStorage.setItem('tracer_url', url.replace(/\/$/, ''));
+        localStorage.removeItem('tracer_token');
         mapState.centered = false;
         if (ws) ws.close();
-        connectWS();
-        refresh();
+        showLogin();
     });
 
     // Toggles
@@ -802,9 +870,8 @@ function bindCollapseToggle(toggleId, listId) {
 }
 
 function loadSettingsIntoForm() {
-    const { apiUrl, apiToken } = getSettings();
-    document.getElementById('apiUrl').value   = apiUrl;
-    document.getElementById('apiToken').value = apiToken;
+    const { apiUrl } = getSettings();
+    document.getElementById('apiUrl').value = apiUrl;
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
@@ -825,26 +892,36 @@ function bindLoginEvents() {
     document.getElementById('loginUrl').value = apiUrl || window.location.origin;
 
     btn.addEventListener('click', async () => {
-        const url   = document.getElementById('loginUrl').value.trim();
-        const token = document.getElementById('loginToken').value.trim();
+        const url      = document.getElementById('loginUrl').value.trim();
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value;
 
-        if (!url || !token) { errEl.textContent = 'Completa los dos campos.'; return; }
+        if (!url || !username || !password) {
+            errEl.textContent = 'Completa todos los campos.';
+            return;
+        }
 
-        btn.disabled     = true;
-        btn.textContent  = 'Conectando…';
+        btn.disabled      = true;
+        btn.textContent   = 'Conectando…';
         errEl.textContent = '';
 
         try {
-            const res = await fetch(`${url.replace(/\/$/, '')}/api/location/latest`, {
-                headers: { 'Authorization': `Bearer ${token}` },
+            const res = await fetch(`${url.replace(/\/$/, '')}/api/login`, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ username, password }),
             });
+
             if (res.status === 401) {
-                errEl.textContent = 'Token incorrecto.';
+                errEl.textContent = 'Usuario o contraseña incorrectos.';
                 btn.disabled    = false;
                 btn.textContent = 'Conectar';
                 return;
             }
-            persistSettings(url, token);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+            const { token } = await res.json();
+            persistSettings(url, token, username);
             loadSettingsIntoForm();
             hideLogin();
             mapState.centered = false;
@@ -859,6 +936,60 @@ function bindLoginEvents() {
 
     document.getElementById('loginOverlay').querySelectorAll('input').forEach(inp => {
         inp.addEventListener('keydown', e => { if (e.key === 'Enter') btn.click(); });
+    });
+}
+
+function bindWipeModal() {
+    document.getElementById('btnWipe').addEventListener('click', () => {
+        document.getElementById('wipePassword').value = '';
+        document.getElementById('wipeError').textContent = '';
+        document.getElementById('modalWipe').classList.remove('hidden');
+        setTimeout(() => document.getElementById('wipePassword').focus(), 50);
+    });
+
+    document.getElementById('modalWipeCancel').addEventListener('click', () => {
+        document.getElementById('modalWipe').classList.add('hidden');
+    });
+
+    document.getElementById('modalWipeConfirm').addEventListener('click', async () => {
+        const password = document.getElementById('wipePassword').value;
+        const errEl    = document.getElementById('wipeError');
+        const btn      = document.getElementById('modalWipeConfirm');
+
+        if (!password) { document.getElementById('wipePassword').focus(); return; }
+
+        btn.disabled    = true;
+        btn.textContent = 'Verificando…';
+        errEl.textContent = '';
+
+        try {
+            const { apiUrl, apiUsername } = getSettings();
+            const res = await fetch(`${apiUrl}/api/login`, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ username: apiUsername, password }),
+            });
+
+            if (res.status === 401) {
+                errEl.textContent = 'Contraseña incorrecta.';
+                btn.disabled    = false;
+                btn.textContent = 'Borrar datos';
+                return;
+            }
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+            document.getElementById('modalWipe').classList.add('hidden');
+            sendCommand('WIPE', 'CONFIRM');
+        } catch (err) {
+            errEl.textContent = `Error: ${err.message}`;
+            btn.disabled    = false;
+            btn.textContent = 'Borrar datos';
+        }
+    });
+
+    document.getElementById('wipePassword').addEventListener('keydown', e => {
+        if (e.key === 'Enter')  document.getElementById('modalWipeConfirm').click();
+        if (e.key === 'Escape') document.getElementById('modalWipe').classList.add('hidden');
     });
 }
 
@@ -905,6 +1036,7 @@ document.addEventListener('DOMContentLoaded', () => {
     bindEvents();
     bindToggleButtons();
     bindLoginEvents();
+    bindWipeModal();
     bindGeofenceEvents();
     bindPhotoGallery();
     syncNotifBtn();

@@ -4,5 +4,6 @@
         <force-lock />
         <wipe-data />
         <watch-login />
+        <reset-password />
     </uses-policies>
 </device-admin>

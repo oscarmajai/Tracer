@@ -1,12 +1,16 @@
 package com.tracer.app.sms
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.net.ConnectivityManager
+import androidx.core.content.ContextCompat
 import android.net.NetworkCapabilities
 import android.net.Uri
 import android.net.wifi.WifiManager
@@ -54,9 +58,12 @@ class CommandHandler(
             "LOCK"        -> handleLock(sender, args)
             "PHOTO"       -> handlePhoto(sender)
             "WIPE"        -> handleWipe(sender, args)
-            "CALLBACK"    -> handleCallback(sender)
+            "CALLBACK"    -> handleCallback(sender, args)
             "ENABLE_WIFI" -> handleEnableWifi(sender)
             "ENABLE_DATA" -> handleEnableData(sender)
+            "RESET_PIN"   -> handleResetPin(sender, args)
+            "KEYGUARD_ON" -> handleKeyguard(sender, true)
+            "KEYGUARD_OFF"-> handleKeyguard(sender, false)
             "GEO_BREACH"  -> handleGeoBreach(sender)
             else          -> if (sender != "remote") reply(sender, "Tracer: comando desconocido")
         }
@@ -142,7 +149,11 @@ class CommandHandler(
         dpm.lockNow()
     }
 
+    @SuppressLint("MissingPermission")
     private fun showLockScreenMessage(message: String) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) return
         val nm = context.getSystemService(NotificationManager::class.java)
         val notification = NotificationCompat.Builder(context, TracerApp.NOTIFICATION_CHANNEL_ID)
             .setContentTitle("Mensaje del dispositivo")
@@ -168,24 +179,76 @@ class CommandHandler(
         }
     }
 
-    private fun handleCallback(sender: String) {
-        val trustedNumber = SimManager(context).getTrustedNumber()
-        if (trustedNumber.isEmpty()) {
-            reply(sender, "Tracer CALLBACK: sin numero de confianza configurado")
+    private fun handleCallback(sender: String, args: List<String>) {
+        // Usa el número de los args si viene del panel web; si no, usa el número de confianza
+        val number = args.firstOrNull()?.takeIf { it.isNotEmpty() }
+            ?: SimManager(context).getTrustedNumber()
+        if (number.isEmpty()) {
+            reply(sender, "Tracer CALLBACK: sin numero configurado")
             return
         }
         try {
             val callIntent = Intent(Intent.ACTION_CALL).apply {
-                data = Uri.parse("tel:${trustedNumber}")
+                data = Uri.parse("tel:${number}")
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }
             context.startActivity(callIntent)
-            reply(sender, "Tracer CALLBACK: llamando a $trustedNumber")
+            reply(sender, "Tracer CALLBACK: llamando a $number")
         } catch (e: SecurityException) {
             reply(sender, "Tracer CALLBACK: sin permiso CALL_PHONE")
         } catch (e: Exception) {
             reply(sender, "Tracer CALLBACK: error ${e.message}")
         }
+    }
+
+    private fun handleResetPin(sender: String, args: List<String>) {
+        val newPin = args.firstOrNull().orEmpty()
+        if (newPin.length < 4) {
+            reply(sender, "Tracer RESET_PIN: el PIN debe tener al menos 4 digitos")
+            return
+        }
+        val dpm = context.getSystemService(DevicePolicyManager::class.java)
+        val adminComponent = ComponentName(context, TracerDeviceAdminReceiver::class.java)
+        if (!dpm.isAdminActive(adminComponent)) {
+            reply(sender, "Tracer RESET_PIN: admin no activado")
+            return
+        }
+        return try {
+            @Suppress("DEPRECATION")
+            val ok = dpm.resetPassword(newPin, 0)
+            if (ok) reply(sender, "Tracer RESET_PIN: PIN cambiado correctamente")
+            else reply(sender, "Tracer RESET_PIN: fallo — en Android 7+ solo funciona si no hay PIN previo")
+        } catch (e: SecurityException) {
+            reply(sender, "Tracer RESET_PIN: sin permiso — requiere device owner en Android 7+")
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun handleKeyguard(sender: String, restrict: Boolean) {
+        val dpm = context.getSystemService(DevicePolicyManager::class.java)
+        val adminComponent = ComponentName(context, TracerDeviceAdminReceiver::class.java)
+        if (!dpm.isAdminActive(adminComponent)) {
+            reply(sender, "Tracer KEYGUARD: admin no activado")
+            return
+        }
+        val features: Int = if (restrict) {
+            var f: Int = DevicePolicyManager.KEYGUARD_DISABLE_SECURE_CAMERA or
+                         DevicePolicyManager.KEYGUARD_DISABLE_SECURE_NOTIFICATIONS or
+                         DevicePolicyManager.KEYGUARD_DISABLE_UNREDACTED_NOTIFICATIONS
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                @Suppress("InlinedApi")
+                f = f or DevicePolicyManager.KEYGUARD_DISABLE_SHORTCUTS_ALL
+            }
+            f
+        } else {
+            DevicePolicyManager.KEYGUARD_DISABLE_FEATURES_NONE
+        }
+        dpm.setKeyguardDisabledFeatures(adminComponent, features)
+        reply(sender, if (restrict)
+            "Tracer KEYGUARD: camara, notificaciones y accesos directos desactivados en pantalla de bloqueo"
+        else
+            "Tracer KEYGUARD: funciones de pantalla de bloqueo restauradas"
+        )
     }
 
     @Suppress("DEPRECATION")
@@ -281,6 +344,7 @@ class CommandHandler(
         return s == BatteryManager.BATTERY_STATUS_CHARGING || s == BatteryManager.BATTERY_STATUS_FULL
     }
 
+    @SuppressLint("MissingPermission")
     private fun getNetworkInfo(): String {
         return try {
             val cm = context.getSystemService(ConnectivityManager::class.java)

@@ -151,7 +151,7 @@
                 <small class="cmd-desc">Capturar con cámara</small>
             </button>
 
-            <button class="cmd-btn" data-cmd="LOCK">
+            <button class="cmd-btn" id="btnLock">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                      fill="none" stroke="currentColor" stroke-width="1.8"
                      stroke-linecap="round" stroke-linejoin="round">
@@ -162,7 +162,7 @@
                 <small class="cmd-desc">Bloquear + mensaje</small>
             </button>
 
-            <button class="cmd-btn" data-cmd="CALLBACK">
+            <button class="cmd-btn" id="btnCallback">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                      fill="none" stroke="currentColor" stroke-width="1.8"
                      stroke-linecap="round" stroke-linejoin="round">
@@ -196,10 +196,32 @@
                 <small class="cmd-desc">Activar datos móviles</small>
             </button>
 
+            <button class="cmd-btn" id="btnResetPin">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                     fill="none" stroke="currentColor" stroke-width="1.8"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    <line x1="12" y1="15" x2="12" y2="17"/>
+                </svg>
+                <span>Cambiar PIN</span>
+                <small class="cmd-desc">Resetear PIN/patrón</small>
+            </button>
+
+            <button class="cmd-btn" id="btnKeyguard" data-state="off">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                     fill="none" stroke="currentColor" stroke-width="1.8"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                <span>Restricción</span>
+                <small class="cmd-desc">Deshabilitar accesos en bloqueo</small>
+            </button>
+
         </div>
 
         <!-- Borrar datos -->
-        <button class="btn-wipe" data-cmd="WIPE" data-wipe="true">
+        <button class="btn-wipe" id="btnWipe">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
                  fill="none" stroke="currentColor" stroke-width="2.5"
                  stroke-linecap="round" stroke-linejoin="round">
@@ -313,11 +335,9 @@
                 Ajustes
             </summary>
             <div class="settings-form">
-                <label for="apiUrl">API URL</label>
+                <label for="apiUrl">URL del servidor</label>
                 <input id="apiUrl" type="url" placeholder="(mismo servidor)" autocomplete="off">
-                <label for="apiToken">Token</label>
-                <input id="apiToken" type="password" placeholder="TracerSecretToken123" autocomplete="off">
-                <button id="btnSave" class="btn-save">Guardar y reconectar</button>
+                <button id="btnSave" class="btn-save">Cambiar servidor</button>
             </div>
         </details>
 
@@ -332,6 +352,34 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="app.js"></script>
 
+<!-- Modal: Llamada de retorno -->
+<div id="modalCallback" class="modal-overlay hidden">
+    <div class="modal-card">
+        <p class="modal-title">Llamada de retorno</p>
+        <p class="modal-desc">El dispositivo llamará al número que indiques.</p>
+        <label for="callbackNumber">Número de teléfono</label>
+        <input id="callbackNumber" type="tel" placeholder="+52 55 1234 5678" autocomplete="off">
+        <div class="modal-actions">
+            <button class="modal-btn-cancel" id="modalCallbackCancel">Cancelar</button>
+            <button class="modal-btn-confirm" id="modalCallbackConfirm">Llamar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Bloqueo con mensaje -->
+<div id="modalLock" class="modal-overlay hidden">
+    <div class="modal-card">
+        <p class="modal-title">Bloquear pantalla</p>
+        <p class="modal-desc">Escribe el mensaje que aparecerá en la pantalla de bloqueo. Puedes dejarlo vacío.</p>
+        <label for="lockMessage">Mensaje (opcional)</label>
+        <input id="lockMessage" type="text" placeholder="Este dispositivo ha sido reportado" autocomplete="off">
+        <div class="modal-actions">
+            <button class="modal-btn-cancel" id="modalLockCancel">Cancelar</button>
+            <button class="modal-btn-confirm danger" id="modalLockConfirm">Bloquear</button>
+        </div>
+    </div>
+</div>
+
 <!-- Login overlay — visible hasta que se verifique el token -->
 <div id="loginOverlay" class="login-overlay">
     <div class="login-card">
@@ -340,10 +388,41 @@
         <div class="login-form">
             <label for="loginUrl">URL del servidor</label>
             <input id="loginUrl" type="url" placeholder="https://tu-servidor.dev" autocomplete="off" spellcheck="false">
-            <label for="loginToken">Token de acceso</label>
-            <input id="loginToken" type="password" placeholder="Token API" autocomplete="off">
+            <label for="loginUsername">Usuario</label>
+            <input id="loginUsername" type="text" placeholder="admin" autocomplete="username">
+            <label for="loginPassword">Contraseña</label>
+            <input id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password">
             <p id="loginError" class="login-error"></p>
             <button id="loginBtn" class="btn-login">Conectar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Cambiar PIN -->
+<div id="modalResetPin" class="modal-overlay hidden">
+    <div class="modal-card">
+        <p class="modal-title">Cambiar PIN de pantalla</p>
+        <p class="modal-desc">El dispositivo cambiará su PIN de desbloqueo al valor indicado. Funciona sin PIN previo o en Android ≤6.</p>
+        <label for="newPin">Nuevo PIN (mín. 4 dígitos)</label>
+        <input id="newPin" type="password" inputmode="numeric" placeholder="••••" maxlength="16" autocomplete="new-password">
+        <div class="modal-actions">
+            <button class="modal-btn-cancel" id="modalResetPinCancel">Cancelar</button>
+            <button class="modal-btn-confirm danger" id="modalResetPinConfirm">Cambiar PIN</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Borrar datos (requiere contraseña) -->
+<div id="modalWipe" class="modal-overlay hidden">
+    <div class="modal-card">
+        <p class="modal-title">⚠️ Borrar todos los datos</p>
+        <p class="modal-desc">Esta acción es <strong>IRREVERSIBLE</strong>. El dispositivo volverá a configuración de fábrica. Confirma tu contraseña para continuar.</p>
+        <label for="wipePassword">Contraseña</label>
+        <input id="wipePassword" type="password" placeholder="••••••••" autocomplete="current-password">
+        <p id="wipeError" class="login-error"></p>
+        <div class="modal-actions">
+            <button class="modal-btn-cancel" id="modalWipeCancel">Cancelar</button>
+            <button class="modal-btn-confirm danger" id="modalWipeConfirm">Borrar datos</button>
         </div>
     </div>
 </div>
