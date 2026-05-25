@@ -1,6 +1,7 @@
 package com.tracer.app.network
 
 import com.tracer.app.BuildConfig
+import com.tracer.app.data.AlertPayload
 import com.tracer.app.data.CommandRecord
 import com.tracer.app.data.CommandResultPayload
 import com.tracer.app.data.LocationTelemetry
@@ -49,6 +50,12 @@ interface TracerApiService {
         @Header("Authorization") token: String,
         @Part("device_id") deviceId: RequestBody,
         @Part photo: MultipartBody.Part
+    ): retrofit2.Response<Unit>
+
+    @POST("api/alert")
+    suspend fun postAlert(
+        @Header("Authorization") token: String,
+        @Body payload: AlertPayload
     ): retrofit2.Response<Unit>
 
     companion object {

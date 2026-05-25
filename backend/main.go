@@ -153,6 +153,11 @@ type PhotoInfo struct {
 	Timestamp string `json:"timestamp"`
 }
 
+type AlertPayload struct {
+	Type    string `json:"type"`
+	Message string `json:"message,omitempty"`
+}
+
 var validFilename = regexp.MustCompile(`^[a-zA-Z0-9_.\-]+\.jpg$`)
 
 // ── Database ──────────────────────────────────────────────────────────────────
@@ -644,6 +649,22 @@ func getPhotoList(c *fiber.Ctx) error {
 	return c.JSON(infos)
 }
 
+// ── Alert handler ─────────────────────────────────────────────────────────────
+
+func postDeviceAlert(c *fiber.Ctx) error {
+	var payload AlertPayload
+	if err := c.BodyParser(&payload); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid body"})
+	}
+	if payload.Type == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "type required"})
+	}
+	ts := time.Now().UTC().Format(time.RFC3339)
+	log.Printf("alert: %s — %s", payload.Type, payload.Message)
+	go broadcast("alert", fiber.Map{"type": payload.Type, "message": payload.Message, "timestamp": ts})
+	return c.SendStatus(fiber.StatusOK)
+}
+
 func getPhotoFile(c *fiber.Ctx) error {
 	filename := c.Params("filename")
 	if !validFilename.MatchString(filename) {
@@ -733,6 +754,8 @@ func main() {
 	api.Get("/geofence", getGeofence)
 	api.Post("/geofence", postGeofence)
 	api.Delete("/geofence", deleteGeofence)
+
+	api.Post("/alert", postDeviceAlert)
 
 	log.Fatal(app.Listen(":" + cfg.Port))
 }

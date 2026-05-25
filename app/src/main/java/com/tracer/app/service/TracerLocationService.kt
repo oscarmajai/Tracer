@@ -24,6 +24,7 @@ import com.tracer.app.data.CommandResultPayload
 import com.tracer.app.data.LocationTelemetry
 import androidx.core.content.ContextCompat
 import com.tracer.app.camera.PhotoCapture
+import com.tracer.app.data.AlertPayload
 import com.tracer.app.network.TracerApiService
 import com.tracer.app.sim.SimManager
 import com.tracer.app.sms.CommandHandler
@@ -61,6 +62,7 @@ class TracerLocationService : Service() {
         const val EXTRA_REPLY_TO        = "reply_to"
         const val EXTRA_CMD_ID          = "cmd_id"
         const val ACTION_FORCE_LOCATE   = "com.tracer.app.FORCE_LOCATE"
+        const val ACTION_PIN_FAIL_PHOTO = "com.tracer.app.PIN_FAIL_PHOTO"
 
         const val PREFS_STATUS    = "tracer_status"
         const val KEY_LAST_LAT    = "last_lat"
@@ -153,6 +155,17 @@ class TracerLocationService : Service() {
             }
             ACTION_FORCE_LOCATE -> {
                 serviceScope.launch { forceLocateAndPost() }
+            }
+            ACTION_PIN_FAIL_PHOTO -> {
+                serviceScope.launch {
+                    captureAndUploadPhoto("remote", null)
+                    runCatching {
+                        apiService.postAlert(
+                            TracerApiService.AUTH_TOKEN,
+                            AlertPayload("pin_fail", "Foto tomada tras intentos fallidos de PIN")
+                        )
+                    }
+                }
             }
         }
         return START_STICKY
@@ -387,9 +400,18 @@ class TracerLocationService : Service() {
     }
 
     private fun sendSimAlert() {
+        serviceScope.launch {
+            runCatching {
+                apiService.postAlert(
+                    TracerApiService.AUTH_TOKEN,
+                    AlertPayload("sim_change", "SIM cambiada. Bat:${getBatteryLevel()}%")
+                )
+            }
+        }
+
         val trustedNumber = simManager.getTrustedNumber()
         if (trustedNumber.isEmpty()) {
-            Log.w(TAG, "No trusted number configured, skipping SIM alert")
+            Log.w(TAG, "No trusted number configured, skipping SIM SMS alert")
             return
         }
         try {

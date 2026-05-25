@@ -204,8 +204,8 @@ html, body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 5px;
-    padding: 10px 6px;
+    gap: 3px;
+    padding: 9px 6px;
     background: #fff;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
@@ -213,13 +213,27 @@ html, body {
     font-size: 11px;
     font-weight: 500;
     cursor: pointer;
-    min-height: 62px;
+    min-height: 68px;
     transition: background .12s, border-color .12s, color .12s;
 }
 .cmd-btn:hover {
     background: var(--primary-lt);
     border-color: #93c5fd;
     color: var(--primary);
+}
+.cmd-btn.active {
+    background: var(--primary-lt);
+    border-color: #93c5fd;
+    color: var(--primary);
+}
+.cmd-btn.active .cmd-desc { color: var(--primary); opacity: .75; }
+
+.cmd-desc {
+    font-size: 9px;
+    color: var(--subtext-lt);
+    text-align: center;
+    line-height: 1.2;
+    font-weight: 400;
 }
 
 /* ── Wipe button ── */
@@ -366,24 +380,52 @@ html, body {
     background: #fff;
 }
 
+.photo-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 7px;
+}
+
 .section-label {
     font-size: 10px;
     font-weight: 700;
     letter-spacing: .07em;
     text-transform: uppercase;
     color: var(--subtext);
-    margin-bottom: 8px;
+    margin: 0;
 }
 
-.photo-section img {
+.btn-photo-gallery {
+    background: none;
+    border: none;
+    font-size: 10.5px;
+    color: var(--primary);
+    cursor: pointer;
+    padding: 0;
+}
+.btn-photo-gallery:hover { text-decoration: underline; }
+
+#latestPhotoWrap img,
+.photo-gallery-old-item img {
     width: 100%;
     border-radius: 5px;
+    display: block;
 }
 
-.photo-ts {
-    margin-top: 5px;
-    font-size: 11px;
+.photo-gallery-ts {
+    font-size: 10px;
     color: var(--subtext);
+    margin-top: 3px;
+}
+
+.photo-gallery-old {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
 }
 
 /* ── Settings ── */
@@ -777,3 +819,22 @@ html, body {
     white-space: nowrap !important;
 }
 .device-label::before { display: none !important; }
+
+/* ── Alert banner ── */
+
+.alert-banner {
+    display: none;
+    margin: 8px 12px 0;
+    padding: 8px 10px;
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-weight: 500;
+    color: #92400e;
+    word-break: break-word;
+}
+
+.alert-banner.visible {
+    display: block;
+}

@@ -124,7 +124,7 @@ function updateMap(latest, history) {
 
     const ts  = new Date(latest.timestamp).toLocaleString('es-MX');
     const bat = latest.battery_level;
-    mapState.marker.bindPopup(`<b>Battery: ${bat}%</b><br><small>${ts}</small>`);
+    mapState.marker.bindPopup(`<b>Batería: ${bat}%</b><br><small>${ts}</small>`);
 
     if (history && history.length > 1) {
         const points = [...history].reverse().map(r => [r.latitude, r.longitude]);
@@ -144,7 +144,7 @@ function updateMap(latest, history) {
 
 // ── Device info ───────────────────────────────────────────────────────────────
 
-const SIGNAL_LABELS = ['None', 'Poor', 'Moderate', 'Good', 'Great'];
+const SIGNAL_LABELS = ['Sin señal', 'Débil', 'Moderada', 'Buena', 'Excelente'];
 
 function updateDeviceInfo(latest) {
     const name = latest.device_name || latest.device_id || 'Unknown';
@@ -178,9 +178,9 @@ function updateDeviceInfo(latest) {
 
 function relativeTime(iso) {
     const diff = (Date.now() - new Date(iso)) / 1000;
-    if (diff < 60)    return `${Math.round(diff)}s ago`;
-    if (diff < 3600)  return `${Math.round(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.round(diff / 3600)}h ago`;
+    if (diff < 60)    return `hace ${Math.round(diff)}s`;
+    if (diff < 3600)  return `hace ${Math.round(diff / 60)}m`;
+    if (diff < 86400) return `hace ${Math.round(diff / 3600)}h`;
     return new Date(iso).toLocaleDateString('es-MX');
 }
 
@@ -194,7 +194,7 @@ function setStatus(online) {
     const dot  = document.getElementById('statusDot');
     const text = document.getElementById('statusText');
     dot.className    = `status-dot ${online ? 'online' : 'offline'}`;
-    text.textContent = online ? 'ONLINE' : 'OFFLINE';
+    text.textContent = online ? 'EN LÍNEA' : 'DESCONECTADO';
     text.className   = `status-text ${online ? '' : 'offline'}`;
 }
 
@@ -204,7 +204,7 @@ async function renderHistory(history) {
     const list = document.getElementById('historyList');
 
     if (!history || history.length === 0) {
-        list.innerHTML = '<li class="history-empty">No location data yet</li>';
+        list.innerHTML = '<li class="history-empty">Sin ubicaciones aún</li>';
         return;
     }
 
@@ -252,7 +252,7 @@ function formatHistoryTime(iso) {
     const d   = new Date(iso);
     const now = new Date();
     const time = d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-    return d.toDateString() === now.toDateString() ? `Today, ${time}` : d.toLocaleDateString('es-MX');
+    return d.toDateString() === now.toDateString() ? `Hoy, ${time}` : d.toLocaleDateString('es-MX');
 }
 
 // ── Command Log ───────────────────────────────────────────────────────────────
@@ -285,7 +285,7 @@ function updateCommandLog(data) {
 function renderCmdLog() {
     const list = document.getElementById('cmdLogList');
     if (!cmdLog || cmdLog.length === 0) {
-        list.innerHTML = '<li class="history-empty">No commands yet</li>';
+        list.innerHTML = '<li class="history-empty">Sin comandos</li>';
         return;
     }
 
@@ -299,7 +299,7 @@ function renderCmdLog() {
                 <small>${ts}${cmd.args ? ' · ' + cmd.args : ''}</small>
                 ${cmd.result
                     ? `<p class="cmd-log-result">${escHtml(cmd.result)}</p>`
-                    : (status === 'pending' ? '<p class="cmd-log-result" style="color:var(--subtext-lt)">Waiting…</p>' : '')}
+                    : (status === 'pending' ? '<p class="cmd-log-result" style="color:var(--subtext-lt)">Esperando…</p>' : '')}
             </div>
         </li>`;
     }).join('');
@@ -331,7 +331,31 @@ function sendNotification(title, body) {
 
 // ── Photo gallery ─────────────────────────────────────────────────────────────
 
-async function fetchPhotoGallery() {
+async function loadBlobUrl(filename) {
+    const { apiUrl, apiToken } = getSettings();
+    const res = await fetch(`${apiUrl}/api/photo/file/${encodeURIComponent(filename)}`, {
+        headers: { 'Authorization': `Bearer ${apiToken}` },
+    });
+    if (!res.ok) return null;
+    return URL.createObjectURL(await res.blob());
+}
+
+function renderPhotoItem(container, photo) {
+    const item = document.createElement('div');
+    item.className = 'photo-gallery-old-item';
+    const img = document.createElement('img');
+    img.alt = 'Foto capturada';
+    const tsEl = document.createElement('p');
+    tsEl.className = 'photo-gallery-ts';
+    tsEl.textContent = relativeTime(photo.timestamp);
+    item.append(img, tsEl);
+    container.appendChild(item);
+    loadBlobUrl(photo.filename).then(url => {
+        if (url) { img._objUrl = url; img.src = url; }
+    }).catch(() => {});
+}
+
+async function fetchPhotos() {
     try {
         const { apiUrl, apiToken } = getSettings();
         const res = await fetch(`${apiUrl}/api/photo/list?limit=6`, {
@@ -341,33 +365,137 @@ async function fetchPhotoGallery() {
         const photos = await res.json();
         if (!photos || photos.length === 0) return;
 
-        const gallery = document.getElementById('photoGallery');
-        gallery.querySelectorAll('img').forEach(img => {
+        document.querySelectorAll('#latestPhotoWrap img, .photo-gallery-old-item img').forEach(img => {
             if (img._objUrl) URL.revokeObjectURL(img._objUrl);
         });
-        gallery.innerHTML = '';
 
-        for (const photo of photos) {
-            const item = document.createElement('div');
-            item.className = 'photo-gallery-item';
-            const img = document.createElement('img');
-            img.alt = 'Captured photo';
-            const ts = document.createElement('p');
-            ts.className = 'photo-gallery-ts';
-            ts.textContent = relativeTime(photo.timestamp);
-            item.append(img, ts);
-            gallery.appendChild(item);
+        const latestWrap = document.getElementById('latestPhotoWrap');
+        const galleryOld = document.getElementById('photoGalleryOld');
+        const btnGallery = document.getElementById('btnPhotoGallery');
+        latestWrap.innerHTML = '';
+        galleryOld.innerHTML = '';
 
-            fetch(`${apiUrl}/api/photo/file/${encodeURIComponent(photo.filename)}`, {
-                headers: { 'Authorization': `Bearer ${apiToken}` },
-            }).then(r => r.ok ? r.blob() : null).then(blob => {
-                if (!blob) return;
-                img._objUrl = URL.createObjectURL(blob);
-                img.src = img._objUrl;
-            }).catch(() => {});
+        const latest = photos[0];
+        const latestImg = document.createElement('img');
+        latestImg.alt = 'Foto capturada';
+        const latestTs = document.createElement('p');
+        latestTs.className = 'photo-gallery-ts';
+        latestTs.textContent = relativeTime(latest.timestamp);
+        latestWrap.append(latestImg, latestTs);
+        loadBlobUrl(latest.filename).then(url => {
+            if (url) { latestImg._objUrl = url; latestImg.src = url; }
+        }).catch(() => {});
+
+        if (photos.length > 1) {
+            for (const photo of photos.slice(1)) renderPhotoItem(galleryOld, photo);
+            btnGallery.style.display = '';
+            btnGallery.textContent = 'Ver más';
+            galleryOld.classList.add('hidden');
+        } else {
+            btnGallery.style.display = 'none';
         }
+
         document.getElementById('photoSection').style.display = 'block';
     } catch {}
+}
+
+async function loadPhotoFromEvent(filename, timestamp) {
+    const section    = document.getElementById('photoSection');
+    const latestWrap = document.getElementById('latestPhotoWrap');
+    const galleryOld = document.getElementById('photoGalleryOld');
+    const btnGallery = document.getElementById('btnPhotoGallery');
+
+    if (latestWrap.hasChildNodes()) {
+        const oldItem = document.createElement('div');
+        oldItem.className = 'photo-gallery-old-item';
+        while (latestWrap.firstChild) oldItem.appendChild(latestWrap.firstChild);
+        galleryOld.insertBefore(oldItem, galleryOld.firstChild);
+        btnGallery.style.display = '';
+        btnGallery.textContent = 'Ver más';
+        galleryOld.classList.add('hidden');
+    }
+
+    const img = document.createElement('img');
+    img.alt = 'Foto capturada';
+    const tsEl = document.createElement('p');
+    tsEl.className = 'photo-gallery-ts';
+    tsEl.textContent = relativeTime(timestamp);
+    latestWrap.append(img, tsEl);
+    try {
+        const url = await loadBlobUrl(filename);
+        if (url) { img._objUrl = url; img.src = url; }
+    } catch {}
+
+    section.style.display = 'block';
+}
+
+function bindPhotoGallery() {
+    document.getElementById('btnPhotoGallery').addEventListener('click', () => {
+        const galleryOld = document.getElementById('photoGalleryOld');
+        const btn = document.getElementById('btnPhotoGallery');
+        const nowHidden = galleryOld.classList.toggle('hidden');
+        btn.textContent = nowHidden ? 'Ver más' : 'Ver menos';
+    });
+}
+
+// ── Device alerts (SIM change, PIN fail) ─────────────────────────────────────
+
+function handleDeviceAlert(data) {
+    const alerts = { sim_change: 'Alerta: SIM cambiada', pin_fail: 'Alerta: intento de desbloqueo' };
+    const title = alerts[data.type] || 'Alerta del dispositivo';
+    sendNotification(title, data.message || '');
+    addAlertBanner(title, data.message || '', data.type);
+}
+
+let alertBannerTimer = null;
+
+function addAlertBanner(title, message, type) {
+    let banner = document.getElementById('alertBanner');
+    if (!banner) return;
+    const icon = type === 'sim_change' ? '⚠️' : type === 'pin_fail' ? '📷' : '🔔';
+    banner.textContent = `${icon} ${title}${message ? ': ' + message : ''}`;
+    banner.className = 'alert-banner visible';
+    clearTimeout(alertBannerTimer);
+    alertBannerTimer = setTimeout(() => { banner.className = 'alert-banner'; }, 8000);
+}
+
+// ── Toggle buttons (Alerta / Sonar) ──────────────────────────────────────────
+
+const toggleState = { alert: false, ring: false };
+
+function bindToggleButtons() {
+    const btnAlert = document.getElementById('btnAlert');
+    const btnRing  = document.getElementById('btnRing');
+
+    btnAlert.addEventListener('click', () => {
+        toggleState.alert = !toggleState.alert;
+        if (toggleState.alert) {
+            sendCommand('ALERT_ON');
+            btnAlert.classList.add('active');
+            btnAlert.querySelector('span').textContent = 'Alerta activa';
+            btnAlert.querySelector('.cmd-desc').textContent = 'Desactivar alerta';
+        } else {
+            sendCommand('ALERT_OFF');
+            btnAlert.classList.remove('active');
+            btnAlert.querySelector('span').textContent = 'Alerta';
+            btnAlert.querySelector('.cmd-desc').textContent = 'Activar modo alerta';
+        }
+    });
+
+    btnRing.addEventListener('click', () => {
+        toggleState.ring = !toggleState.ring;
+        if (toggleState.ring) {
+            sendCommand('RING');
+            btnRing.classList.add('active');
+            btnRing.querySelector('span').textContent = 'Sonando';
+            btnRing.querySelector('.cmd-desc').textContent = 'Detener timbre';
+        } else {
+            sendCommand('RING_STOP');
+            btnRing.classList.remove('active');
+            btnRing.querySelector('span').textContent = 'Sonar';
+            btnRing.querySelector('.cmd-desc').textContent = 'Activar timbre 30s';
+        }
+    });
 }
 
 // ── Geofence ──────────────────────────────────────────────────────────────────
@@ -540,13 +668,20 @@ function connectWS() {
                     }
                     break;
                 case 'photo':
-                    fetchPhotoGallery();
+                    if (msg.data && msg.data.filename) {
+                        loadPhotoFromEvent(msg.data.filename, msg.data.timestamp || new Date().toISOString());
+                    } else {
+                        fetchPhotos();
+                    }
                     break;
                 case 'geofence_breach':
                     sendNotification(
                         'Alerta: zona segura abandonada',
                         `El dispositivo salió de la zona (${Math.round(msg.data.distance)}m del centro)`
                     );
+                    break;
+                case 'alert':
+                    handleDeviceAlert(msg.data);
                     break;
             }
         } catch {}
@@ -575,33 +710,32 @@ async function refresh() {
             updateDeviceInfo(latest);
             updateMap(latest, history || []);
         } else if (!wsConnected) {
-            document.getElementById('statusText').textContent = 'WAITING';
+            document.getElementById('statusText').textContent = 'ESPERANDO';
         }
         if (history) renderHistory(history);
     } catch (err) {
         if (!wsConnected) setStatus(false);
         console.warn('Refresh error:', err.message);
     }
-    await fetchPhotoGallery();
+    await fetchPhotos();
 }
 
 // ── Commands ──────────────────────────────────────────────────────────────────
 
 async function sendCommand(command, args) {
     const feedback = document.getElementById('cmdFeedback');
-    feedback.textContent = `Sending ${command}…`;
+    feedback.textContent = `Enviando ${command}…`;
     feedback.className   = 'feedback';
 
     try {
         const body   = JSON.stringify({ command, args: args || '' });
         const result = await apiFetch('/api/command', { method: 'POST', body });
 
-        // Agregar al log de comandos como "pending"
         cmdLog.unshift({ id: result.id, command, args: args || '', status: 'pending', created_at: new Date().toISOString() });
         if (cmdLog.length > 8) cmdLog.pop();
         renderCmdLog();
 
-        feedback.textContent = `✓ ${command} queued (id ${result.id})`;
+        feedback.textContent = `✓ ${command} en cola (id ${result.id})`;
         feedback.className   = 'feedback ok';
     } catch (err) {
         feedback.textContent = `✗ Error: ${err.message}`;
@@ -619,13 +753,19 @@ function bindEvents() {
             const cmd  = btn.dataset.cmd;
             const args = btn.dataset.args || '';
             if (btn.dataset.wipe === 'true') {
-                if (!confirm('⚠️ Wipe ALL device data?\nThis action is IRREVERSIBLE.')) return;
-                if (!confirm('SECOND CONFIRMATION\nExecute factory reset?')) return;
+                if (!confirm('⚠️ ¿Borrar TODOS los datos del dispositivo?\nEsta acción es IRREVERSIBLE.')) return;
+                if (!confirm('SEGUNDA CONFIRMACIÓN\n¿Ejecutar restablecimiento de fábrica?')) return;
                 sendCommand('WIPE', 'CONFIRM');
                 return;
             }
+            if (cmd === 'LOCK') {
+                const msg = prompt('Mensaje en pantalla de bloqueo (opcional):') || '';
+                if (!confirm('¿Bloquear la pantalla del dispositivo?')) return;
+                sendCommand('LOCK', msg.trim());
+                return;
+            }
             if (btn.dataset.confirm === 'true') {
-                if (!confirm(`Execute ${cmd}?\nThis cannot be undone.`)) return;
+                if (!confirm(`¿Ejecutar ${cmd}?\nEsta acción no se puede deshacer.`)) return;
             }
             sendCommand(cmd, args);
         });
@@ -763,8 +903,10 @@ document.addEventListener('DOMContentLoaded', () => {
     initMap();
     loadSettingsIntoForm();
     bindEvents();
+    bindToggleButtons();
     bindLoginEvents();
     bindGeofenceEvents();
+    bindPhotoGallery();
     syncNotifBtn();
     checkAuth();
 });

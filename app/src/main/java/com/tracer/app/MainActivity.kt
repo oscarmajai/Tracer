@@ -58,6 +58,10 @@ class MainActivity : ComponentActivity() {
 
     private val phonePermLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
+    ) { requestCallPermissions() }
+
+    private val callPermLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
     ) { requestCameraPermissions() }
 
     private val cameraPermLauncher = registerForActivityResult(
@@ -323,8 +327,15 @@ class MainActivity : ComponentActivity() {
     private fun requestPhonePermissions() {
         val missing = arrayOf(Manifest.permission.READ_PHONE_STATE)
             .filter { ContextCompat.checkSelfPermission(this, it) != PERMISSION_GRANTED }
-        if (missing.isEmpty()) requestCameraPermissions()
+        if (missing.isEmpty()) requestCallPermissions()
         else phonePermLauncher.launch(missing.toTypedArray())
+    }
+
+    private fun requestCallPermissions() {
+        val missing = arrayOf(Manifest.permission.CALL_PHONE)
+            .filter { ContextCompat.checkSelfPermission(this, it) != PERMISSION_GRANTED }
+        if (missing.isEmpty()) requestCameraPermissions()
+        else callPermLauncher.launch(missing.toTypedArray())
     }
 
     private fun requestCameraPermissions() {
