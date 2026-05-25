@@ -39,14 +39,27 @@ html, body {
     height: 100vh;
 }
 
-/* ── Sidebar ── */
+/* ── Sidebars ── */
 
-.sidebar {
-    width: 232px;
-    min-width: 232px;
+.sidebar-left {
+    width: 220px;
+    min-width: 220px;
     min-height: 0;
     background: var(--sidebar);
     border-right: 1px solid var(--border);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 10px 20px;
+}
+
+.sidebar-right {
+    width: 248px;
+    min-width: 248px;
+    min-height: 0;
+    background: var(--sidebar);
+    border-left: 1px solid var(--border);
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -428,74 +441,6 @@ html, body {
     border-top: 1px solid var(--border);
     padding-top: 8px;
 }
-
-/* ── Settings ── */
-
-.settings-details {
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-}
-
-.settings-summary {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 10px 11px;
-    background: var(--surface);
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--subtext);
-    list-style: none;
-    user-select: none;
-}
-.settings-summary::-webkit-details-marker { display: none; }
-.settings-summary:hover { color: var(--text); }
-
-.settings-form {
-    padding: 10px 11px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    background: #fff;
-    border-top: 1px solid var(--border);
-}
-
-.settings-form label {
-    font-size: 11px;
-    color: var(--subtext);
-    margin-top: 3px;
-}
-
-.settings-form input {
-    padding: 6px 9px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text);
-    font-size: 12px;
-    width: 100%;
-}
-.settings-form input:focus {
-    outline: none;
-    border-color: var(--primary);
-}
-
-.btn-save {
-    margin-top: 5px;
-    padding: 8px;
-    background: var(--primary);
-    color: #fff;
-    border: none;
-    border-radius: var(--radius-sm);
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    width: 100%;
-    transition: background .15s;
-}
-.btn-save:hover { background: var(--primary-dk); }
 
 /* ── Map ── */
 

@@ -12,7 +12,8 @@
 
 <div class="layout">
 
-    <aside class="sidebar">
+    <!-- Panel izquierdo: comandos -->
+    <aside class="sidebar-left">
 
         <div class="sidebar-top">
             <div class="sidebar-top-row">
@@ -28,58 +29,6 @@
             </div>
         </div>
 
-        <!-- Device card -->
-        <div class="device-card">
-            <div class="device-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
-                     fill="none" stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
-                    <line x1="12" y1="18" x2="12.01" y2="18"/>
-                </svg>
-            </div>
-            <div class="device-meta">
-                <p id="deviceName" class="device-name">—</p>
-                <p id="deviceModel" class="device-model">—</p>
-                <div class="device-status-row">
-                    <span id="statusDot" class="status-dot"></span>
-                    <span id="statusText" class="status-text connecting">Conectando…</span>
-                    <span id="lastSeen" class="last-seen"></span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Stats -->
-        <div class="stats-row">
-            <div class="stat-card">
-                <div class="stat-label-row">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24"
-                         fill="none" stroke="currentColor" stroke-width="2"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="1" y="6" width="18" height="12" rx="2"/>
-                        <line x1="23" y1="13" x2="23" y2="11"/>
-                    </svg>
-                    <span>BATERÍA</span>
-                </div>
-                <p id="batteryValue" class="stat-value">—</p>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label-row">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24"
-                         fill="none" stroke="currentColor" stroke-width="2"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
-                        <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
-                        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
-                        <line x1="12" y1="20" x2="12.01" y2="20"/>
-                    </svg>
-                    <span>SEÑAL</span>
-                </div>
-                <p id="signalValue" class="stat-value">—</p>
-            </div>
-        </div>
-
-        <!-- Localizar -->
         <button class="btn-locate" data-cmd="LOCATE">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
                  fill="none" stroke="currentColor" stroke-width="2.5"
@@ -90,7 +39,6 @@
             Localizar
         </button>
 
-        <!-- Cuadrícula de comandos -->
         <div class="cmd-grid">
 
             <button class="cmd-btn" data-cmd="BATTERY">
@@ -116,7 +64,6 @@
                 <small class="cmd-desc">Resumen del sistema</small>
             </button>
 
-            <!-- Alerta: toggle ON / OFF -->
             <button class="cmd-btn" id="btnAlert" data-state="off">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                      fill="none" stroke="currentColor" stroke-width="1.8"
@@ -128,7 +75,6 @@
                 <small class="cmd-desc">Activar modo alerta</small>
             </button>
 
-            <!-- Sonar: toggle ON / OFF -->
             <button class="cmd-btn" id="btnRing" data-state="off">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                      fill="none" stroke="currentColor" stroke-width="1.8"
@@ -220,7 +166,6 @@
 
         </div>
 
-        <!-- Borrar datos -->
         <button class="btn-wipe" id="btnWipe">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
                  fill="none" stroke="currentColor" stroke-width="2.5"
@@ -233,6 +178,64 @@
         </button>
 
         <p id="cmdFeedback" class="feedback"></p>
+
+    </aside>
+
+    <main id="map"></main>
+
+    <!-- Panel derecho: info, historial, fotos -->
+    <aside class="sidebar-right">
+
+        <div class="device-card">
+            <div class="device-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
+                     fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                    <line x1="12" y1="18" x2="12.01" y2="18"/>
+                </svg>
+            </div>
+            <div class="device-meta">
+                <p id="deviceName" class="device-name">—</p>
+                <p id="deviceModel" class="device-model">—</p>
+                <div class="device-status-row">
+                    <span id="statusDot" class="status-dot"></span>
+                    <span id="statusText" class="status-text connecting">Conectando…</span>
+                    <span id="lastSeen" class="last-seen"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-label-row">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="1" y="6" width="18" height="12" rx="2"/>
+                        <line x1="23" y1="13" x2="23" y2="11"/>
+                    </svg>
+                    <span>BATERÍA</span>
+                </div>
+                <p id="batteryValue" class="stat-value">—</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label-row">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+                        <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+                        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+                        <line x1="12" y1="20" x2="12.01" y2="20"/>
+                    </svg>
+                    <span>SEÑAL</span>
+                </div>
+                <p id="signalValue" class="stat-value">—</p>
+            </div>
+        </div>
+
+        <div id="alertBanner" class="alert-banner"></div>
 
         <!-- Command Log -->
         <div class="history-section">
@@ -323,11 +326,7 @@
             <div id="photoGalleryOld" class="photo-gallery-old hidden"></div>
         </section>
 
-        <div id="alertBanner" class="alert-banner"></div>
-
     </aside>
-
-    <main id="map"></main>
 
 </div>
 
