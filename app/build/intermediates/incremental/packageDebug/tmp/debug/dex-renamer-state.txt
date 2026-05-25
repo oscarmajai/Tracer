@@ -1,4 +1,4 @@
-#Sun May 24 15:41:45 CST 2026
+#Sun May 24 22:38:34 CST 2026
 base.0=/home/oscarmajai/Proyectos/Tracer/app/build/intermediates/dex/debug/mergeExtDexDebug/classes.dex
 base.1=/home/oscarmajai/Proyectos/Tracer/app/build/intermediates/dex/debug/mergeProjectDexDebug/0/classes.dex
 base.2=/home/oscarmajai/Proyectos/Tracer/app/build/intermediates/dex/debug/mergeProjectDexDebug/10/classes.dex
