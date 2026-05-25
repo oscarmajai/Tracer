@@ -2,21 +2,15 @@
 
 // ── Settings ──────────────────────────────────────────────────────────────────
 
-const DEFAULTS = {
-    apiUrl:   window.location.origin,
-    apiToken: '',
-};
-
 function getSettings() {
     return {
-        apiUrl:      localStorage.getItem('tracer_url')      || DEFAULTS.apiUrl,
-        apiToken:    localStorage.getItem('tracer_token')    || DEFAULTS.apiToken,
+        apiUrl:      window.location.origin,
+        apiToken:    localStorage.getItem('tracer_token')    || '',
         apiUsername: localStorage.getItem('tracer_username') || '',
     };
 }
 
-function persistSettings(url, token, username) {
-    localStorage.setItem('tracer_url',   url.replace(/\/$/, ''));
+function persistSettings(token, username) {
     localStorage.setItem('tracer_token', token);
     if (username !== undefined) localStorage.setItem('tracer_username', username);
 }
@@ -840,16 +834,6 @@ function bindEvents() {
         btnKG.querySelector('.cmd-desc').textContent = on ? 'Restaurar accesos' : 'Deshabilitar accesos en bloqueo';
     });
 
-    document.getElementById('btnSave').addEventListener('click', () => {
-        const url = document.getElementById('apiUrl').value.trim();
-        if (!url) return;
-        localStorage.setItem('tracer_url', url.replace(/\/$/, ''));
-        localStorage.removeItem('tracer_token');
-        mapState.centered = false;
-        if (ws) ws.close();
-        showLogin();
-    });
-
     // Toggles
     bindCollapseToggle('historyToggle',  'historyList');
     bindCollapseToggle('cmdLogToggle',   'cmdLogList');
@@ -869,11 +853,6 @@ function bindCollapseToggle(toggleId, listId) {
     });
 }
 
-function loadSettingsIntoForm() {
-    const { apiUrl } = getSettings();
-    document.getElementById('apiUrl').value = apiUrl;
-}
-
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 function showLogin() {
@@ -888,15 +867,11 @@ function bindLoginEvents() {
     const btn   = document.getElementById('loginBtn');
     const errEl = document.getElementById('loginError');
 
-    const { apiUrl } = getSettings();
-    document.getElementById('loginUrl').value = apiUrl || window.location.origin;
-
     btn.addEventListener('click', async () => {
-        const url      = document.getElementById('loginUrl').value.trim();
         const username = document.getElementById('loginUsername').value.trim();
         const password = document.getElementById('loginPassword').value;
 
-        if (!url || !username || !password) {
+        if (!username || !password) {
             errEl.textContent = 'Completa todos los campos.';
             return;
         }
@@ -906,7 +881,7 @@ function bindLoginEvents() {
         errEl.textContent = '';
 
         try {
-            const res = await fetch(`${url.replace(/\/$/, '')}/api/login`, {
+            const res = await fetch('/api/login', {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body:    JSON.stringify({ username, password }),
@@ -915,14 +890,13 @@ function bindLoginEvents() {
             if (res.status === 401) {
                 errEl.textContent = 'Usuario o contraseña incorrectos.';
                 btn.disabled    = false;
-                btn.textContent = 'Conectar';
+                btn.textContent = 'Entrar';
                 return;
             }
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
             const { token } = await res.json();
-            persistSettings(url, token, username);
-            loadSettingsIntoForm();
+            persistSettings(token, username);
             hideLogin();
             mapState.centered = false;
             startRefreshing();
@@ -930,7 +904,7 @@ function bindLoginEvents() {
         } catch (err) {
             errEl.textContent = `Error de conexión: ${err.message}`;
             btn.disabled    = false;
-            btn.textContent = 'Conectar';
+            btn.textContent = 'Entrar';
         }
     });
 
@@ -963,8 +937,8 @@ function bindWipeModal() {
         errEl.textContent = '';
 
         try {
-            const { apiUrl, apiUsername } = getSettings();
-            const res = await fetch(`${apiUrl}/api/login`, {
+            const { apiUsername } = getSettings();
+            const res = await fetch('/api/login', {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body:    JSON.stringify({ username: apiUsername, password }),
@@ -1032,7 +1006,6 @@ async function checkAuth() {
 
 document.addEventListener('DOMContentLoaded', () => {
     initMap();
-    loadSettingsIntoForm();
     bindEvents();
     bindToggleButtons();
     bindLoginEvents();
