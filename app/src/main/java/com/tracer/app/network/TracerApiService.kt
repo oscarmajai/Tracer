@@ -1,6 +1,8 @@
 package com.tracer.app.network
 
+import com.tracer.app.BuildConfig
 import com.tracer.app.data.CommandRecord
+import com.tracer.app.data.CommandResultPayload
 import com.tracer.app.data.LocationTelemetry
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
@@ -28,10 +30,17 @@ interface TracerApiService {
         @Header("Authorization") token: String
     ): retrofit2.Response<List<CommandRecord>>
 
-    @POST("api/command/{id}/ack")
+    @POST("api/command/:id/ack")
     suspend fun ackCommand(
         @Header("Authorization") token: String,
         @Path("id") id: Long
+    ): retrofit2.Response<Unit>
+
+    @POST("api/command/{id}/result")
+    suspend fun postCommandResult(
+        @Header("Authorization") token: String,
+        @Path("id") id: Long,
+        @Body body: CommandResultPayload
     ): retrofit2.Response<Unit>
 
     @Multipart
@@ -44,8 +53,8 @@ interface TracerApiService {
 
     companion object {
 
-        const val BASE_URL = "https://tracer.oscarmajai.dev/"
-        const val AUTH_TOKEN = "48364d38877807ad7b13c66bf0d2be4f6b2e478f12487aff62a8e5db76837ca9"
+        val BASE_URL: String get() = BuildConfig.TRACER_BASE_URL
+        val AUTH_TOKEN: String get() = "Bearer ${BuildConfig.TRACER_AUTH_TOKEN}"
 
         fun create(): TracerApiService {
             val client = OkHttpClient.Builder()

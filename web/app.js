@@ -4,7 +4,7 @@
 
 const DEFAULTS = {
     apiUrl:   window.location.origin,
-    apiToken: 'TracerSecretToken123',
+    apiToken: '',
 };
 
 function getSettings() {
@@ -37,56 +37,105 @@ async function apiFetch(path, options = {}) {
     return res.json();
 }
 
+// ── Geocoding ─────────────────────────────────────────────────────────────────
+
+const geocodeCache = new Map();
+
+async function reverseGeocode(lat, lon) {
+    const key = `${lat.toFixed(3)},${lon.toFixed(3)}`;
+    if (geocodeCache.has(key)) return geocodeCache.get(key);
+
+    try {
+        const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
+            { headers: { 'User-Agent': 'Tracer/1.0 (phone-tracker-app)' } }
+        );
+        if (!res.ok) throw new Error('geocode failed');
+        const data = await res.json();
+        const addr = data.address || {};
+        const name = addr.road || addr.neighbourhood || addr.suburb ||
+                     addr.city_district || addr.city ||
+                     (data.display_name || '').split(',')[0] ||
+                     `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+        const sub  = addr.city || addr.town || addr.village || addr.state || '';
+        const result = { name, sub };
+        geocodeCache.set(key, result);
+        return result;
+    } catch {
+        const result = { name: `${lat.toFixed(4)}, ${lon.toFixed(4)}`, sub: '' };
+        geocodeCache.set(key, result);
+        return result;
+    }
+}
+
 // ── Map ───────────────────────────────────────────────────────────────────────
 
 const mapState = {
-    instance:  null,
-    marker:    null,
-    trail:     null,
-    centered:  false,
+    instance:   null,
+    marker:     null,
+    trail:      null,
+    centered:   false,
+    deviceName: 'Device',
 };
 
 function initMap() {
-    mapState.instance = L.map('map', { zoomControl: true })
-        .setView([23.6345, -102.5528], 5); // Vista inicial: México
+    mapState.instance = L.map('map', { zoomControl: false })
+        .setView([23.6345, -102.5528], 5);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        maxZoom: 19,
-    }).addTo(mapState.instance);
+    L.tileLayer(
+        'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+        {
+            attribution:
+                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' +
+                ' &copy; <a href="https://carto.com/">CARTO</a>',
+            maxZoom: 19,
+        }
+    ).addTo(mapState.instance);
+
+    L.control.zoom({ position: 'bottomright' }).addTo(mapState.instance);
+}
+
+function makeDeviceIcon(initial) {
+    return L.divIcon({
+        className:     '',
+        html:          `<div class="device-marker">${initial}</div>`,
+        iconSize:      [36, 36],
+        iconAnchor:    [18, 18],
+        tooltipAnchor: [0, -22],
+    });
 }
 
 function updateMap(latest, history) {
-    const latlng = [latest.latitude, latest.longitude];
+    const latlng  = [latest.latitude, latest.longitude];
+    const initial = (mapState.deviceName || 'D').charAt(0).toUpperCase();
 
-    // Marcador de posición actual
     if (!mapState.marker) {
-        mapState.marker = L.marker(latlng).addTo(mapState.instance);
+        mapState.marker = L.marker(latlng, { icon: makeDeviceIcon(initial) })
+            .addTo(mapState.instance);
+        mapState.marker.bindTooltip(mapState.deviceName, {
+            permanent: true, direction: 'bottom', offset: [0, 10], className: 'device-label',
+        });
     } else {
         mapState.marker.setLatLng(latlng);
+        mapState.marker.setIcon(makeDeviceIcon(initial));
+        const tt = mapState.marker.getTooltip();
+        if (tt) tt.setContent(mapState.deviceName);
     }
 
     const ts  = new Date(latest.timestamp).toLocaleString('es-MX');
     const bat = latest.battery_level;
-    mapState.marker.bindPopup(
-        `<b>Batería: ${bat}%</b><br><small>${ts}</small>`
-    );
+    mapState.marker.bindPopup(`<b>Battery: ${bat}%</b><br><small>${ts}</small>`);
 
-    // Traza del historial (puntos en orden cronológico)
     if (history && history.length > 1) {
         const points = [...history].reverse().map(r => [r.latitude, r.longitude]);
         if (!mapState.trail) {
-            mapState.trail = L.polyline(points, {
-                color: '#1f6feb',
-                weight: 2.5,
-                opacity: 0.55,
-            }).addTo(mapState.instance);
+            mapState.trail = L.polyline(points, { color: '#2563eb', weight: 2.5, opacity: 0.5 })
+                .addTo(mapState.instance);
         } else {
             mapState.trail.setLatLngs(points);
         }
     }
 
-    // Centrar en la primera carga o tras un reset de configuración
     if (!mapState.centered) {
         mapState.instance.setView(latlng, 15);
         mapState.centered = true;
@@ -95,69 +144,425 @@ function updateMap(latest, history) {
 
 // ── Device info ───────────────────────────────────────────────────────────────
 
+const SIGNAL_LABELS = ['None', 'Poor', 'Moderate', 'Good', 'Great'];
+
 function updateDeviceInfo(latest) {
-    const bat    = latest.battery_level;
-    const batEl  = document.getElementById('battery');
-    batEl.textContent = `${bat}%`;
-    batEl.style.color = bat > 50 ? 'var(--success)' : bat > 20 ? 'var(--warning)' : 'var(--danger)';
+    const name = latest.device_name || latest.device_id || 'Unknown';
+    mapState.deviceName = name;
 
-    document.getElementById('timestamp').textContent = relativeTime(latest.timestamp);
+    document.getElementById('deviceName').textContent = name;
+    document.getElementById('deviceModel').textContent = latest.device_id || '—';
+    document.getElementById('lastSeen').textContent    = relativeTime(latest.timestamp);
 
-    const lat  = latest.latitude.toFixed(5);
-    const lon  = latest.longitude.toFixed(5);
-    const link = document.getElementById('coordsLink');
-    link.textContent = `${lat}, ${lon}`;
-    link.href = `https://maps.google.com/?q=${latest.latitude},${latest.longitude}`;
+    const bat   = latest.battery_level;
+    const batEl = document.getElementById('batteryValue');
+    const charging = latest.is_charging;
+    batEl.textContent  = `${bat}%${charging ? ' ⚡' : ''}`;
+    batEl.style.color  = bat > 50 ? 'var(--success)'
+                       : bat > 20 ? 'var(--warning)'
+                       :            'var(--danger)';
+    if (bat <= 15 && !lowBatNotified) {
+        sendNotification('Batería baja', `Batería al ${bat}% en ${name}`);
+        lowBatNotified = true;
+    } else if (bat > 15) {
+        lowBatNotified = false;
+    }
+
+    const sigEl = document.getElementById('signalValue');
+    if (latest.signal_level != null) {
+        sigEl.textContent = SIGNAL_LABELS[latest.signal_level] ?? `${latest.signal_level}`;
+    } else {
+        sigEl.textContent = '—';
+    }
 }
 
 function relativeTime(iso) {
     const diff = (Date.now() - new Date(iso)) / 1000;
-    if (diff < 60)    return `hace ${Math.round(diff)}s`;
-    if (diff < 3600)  return `hace ${Math.round(diff / 60)}min`;
-    if (diff < 86400) return `hace ${Math.round(diff / 3600)}h`;
+    if (diff < 60)    return `${Math.round(diff)}s ago`;
+    if (diff < 3600)  return `${Math.round(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.round(diff / 3600)}h ago`;
     return new Date(iso).toLocaleDateString('es-MX');
 }
 
-// ── Status bar ────────────────────────────────────────────────────────────────
+// ── Status ────────────────────────────────────────────────────────────────────
 
 function setStatus(online) {
-    document.getElementById('statusDot').className  = `dot ${online ? 'online' : 'offline'}`;
-    document.getElementById('statusText').textContent = online ? 'En línea' : 'Sin conexión';
+    if (_statusOnline === true && !online) {
+        sendNotification('Dispositivo desconectado', 'Tracer dejó de reportar ubicación');
+    }
+    _statusOnline = online;
+    const dot  = document.getElementById('statusDot');
+    const text = document.getElementById('statusText');
+    dot.className    = `status-dot ${online ? 'online' : 'offline'}`;
+    text.textContent = online ? 'ONLINE' : 'OFFLINE';
+    text.className   = `status-text ${online ? '' : 'offline'}`;
 }
 
-function setLastUpdate() {
-    document.getElementById('lastUpdate').textContent =
-        `Actualizado: ${new Date().toLocaleTimeString('es-MX')}`;
+// ── Location History ──────────────────────────────────────────────────────────
+
+async function renderHistory(history) {
+    const list = document.getElementById('historyList');
+
+    if (!history || history.length === 0) {
+        list.innerHTML = '<li class="history-empty">No location data yet</li>';
+        return;
+    }
+
+    const seen   = new Set();
+    const unique = [];
+    for (const r of history) {
+        const key = `${r.latitude.toFixed(3)},${r.longitude.toFixed(3)}`;
+        if (!seen.has(key)) {
+            seen.add(key);
+            unique.push(r);
+            if (unique.length >= 5) break;
+        }
+    }
+
+    const geocoded = await Promise.all(
+        unique.map(r => reverseGeocode(r.latitude, r.longitude))
+    );
+
+    list.innerHTML = unique.map((r, i) => {
+        const geo       = geocoded[i];
+        const ts        = formatHistoryTime(r.timestamp);
+        const connector = i < unique.length - 1
+            ? `<div class="history-connector"></div>` : '';
+        return `
+        <li class="history-item" data-lat="${r.latitude}" data-lon="${r.longitude}">
+            <div class="history-dot-wrap">
+                <div class="history-dot ${i === 0 ? 'current' : ''}"></div>
+                ${connector}
+            </div>
+            <div class="history-text">
+                <strong title="${geo.name}">${geo.name}</strong>
+                <small>${geo.sub ? geo.sub + ' · ' : ''}${ts}</small>
+            </div>
+        </li>`;
+    }).join('');
+
+    list.querySelectorAll('.history-item').forEach(li => {
+        li.addEventListener('click', () => {
+            mapState.instance.flyTo([parseFloat(li.dataset.lat), parseFloat(li.dataset.lon)], 16, { duration: 1 });
+        });
+    });
 }
 
-// ── Photo ─────────────────────────────────────────────────────────────────────
+function formatHistoryTime(iso) {
+    const d   = new Date(iso);
+    const now = new Date();
+    const time = d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+    return d.toDateString() === now.toDateString() ? `Today, ${time}` : d.toLocaleDateString('es-MX');
+}
 
-async function fetchLatestPhoto() {
+// ── Command Log ───────────────────────────────────────────────────────────────
+
+let cmdLog        = [];   // [{id, command, status, result, created_at}]
+let lowBatNotified = false;
+let _statusOnline  = null;
+
+async function loadCommandHistory() {
+    try {
+        const history = await apiFetch('/api/command/history?limit=8');
+        if (history) {
+            cmdLog = history;
+            renderCmdLog();
+        }
+    } catch {}
+}
+
+function updateCommandLog(data) {
+    // data = {id, result, executed_at}
+    const entry = cmdLog.find(e => e.id === data.id);
+    if (entry) {
+        entry.status     = 'executed';
+        entry.result     = data.result;
+        entry.executed_at = data.executed_at;
+    }
+    renderCmdLog();
+}
+
+function renderCmdLog() {
+    const list = document.getElementById('cmdLogList');
+    if (!cmdLog || cmdLog.length === 0) {
+        list.innerHTML = '<li class="history-empty">No commands yet</li>';
+        return;
+    }
+
+    list.innerHTML = cmdLog.map(cmd => {
+        const ts     = formatHistoryTime(cmd.created_at);
+        const status = cmd.status === 'executed' ? 'executed' : 'pending';
+        return `
+        <li class="cmd-log-item">
+            <span class="cmd-badge ${status}">${cmd.command}</span>
+            <div class="cmd-log-text">
+                <small>${ts}${cmd.args ? ' · ' + cmd.args : ''}</small>
+                ${cmd.result
+                    ? `<p class="cmd-log-result">${escHtml(cmd.result)}</p>`
+                    : (status === 'pending' ? '<p class="cmd-log-result" style="color:var(--subtext-lt)">Waiting…</p>' : '')}
+            </div>
+        </li>`;
+    }).join('');
+}
+
+function escHtml(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ── Notifications ─────────────────────────────────────────────────────────────
+
+async function requestNotifications() {
+    if (!('Notification' in window)) return;
+    await Notification.requestPermission();
+    syncNotifBtn();
+}
+
+function syncNotifBtn() {
+    if (!('Notification' in window)) return;
+    const btn = document.getElementById('btnNotif');
+    btn.classList.toggle('active', Notification.permission === 'granted');
+    btn.title = Notification.permission === 'granted' ? 'Notificaciones activas' : 'Activar notificaciones';
+}
+
+function sendNotification(title, body) {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    new Notification(title, { body, tag: title });
+}
+
+// ── Photo gallery ─────────────────────────────────────────────────────────────
+
+async function fetchPhotoGallery() {
     try {
         const { apiUrl, apiToken } = getSettings();
-        const res = await fetch(`${apiUrl}/api/photo/latest`, {
+        const res = await fetch(`${apiUrl}/api/photo/list?limit=6`, {
             headers: { 'Authorization': `Bearer ${apiToken}` },
         });
         if (!res.ok) return;
+        const photos = await res.json();
+        if (!photos || photos.length === 0) return;
 
-        const blob = await res.blob();
-        const img  = document.getElementById('latestPhoto');
+        const gallery = document.getElementById('photoGallery');
+        gallery.querySelectorAll('img').forEach(img => {
+            if (img._objUrl) URL.revokeObjectURL(img._objUrl);
+        });
+        gallery.innerHTML = '';
 
-        if (img._objectUrl) URL.revokeObjectURL(img._objectUrl);
-        img._objectUrl = URL.createObjectURL(blob);
-        img.src        = img._objectUrl;
-        img.style.display = 'block';
+        for (const photo of photos) {
+            const item = document.createElement('div');
+            item.className = 'photo-gallery-item';
+            const img = document.createElement('img');
+            img.alt = 'Captured photo';
+            const ts = document.createElement('p');
+            ts.className = 'photo-gallery-ts';
+            ts.textContent = relativeTime(photo.timestamp);
+            item.append(img, ts);
+            gallery.appendChild(item);
 
-        const ts = res.headers.get('Last-Modified');
-        document.getElementById('photoTimestamp').textContent =
-            ts ? relativeTime(ts) : '';
+            fetch(`${apiUrl}/api/photo/file/${encodeURIComponent(photo.filename)}`, {
+                headers: { 'Authorization': `Bearer ${apiToken}` },
+            }).then(r => r.ok ? r.blob() : null).then(blob => {
+                if (!blob) return;
+                img._objUrl = URL.createObjectURL(blob);
+                img.src = img._objUrl;
+            }).catch(() => {});
+        }
         document.getElementById('photoSection').style.display = 'block';
-    } catch (_) {
-        // sin foto aún, ignorar silenciosamente
+    } catch {}
+}
+
+// ── Geofence ──────────────────────────────────────────────────────────────────
+
+const geofenceState = { circle: null, drawMode: false, pending: null };
+
+function drawGeofenceCircle(lat, lon, radius) {
+    if (geofenceState.circle) {
+        geofenceState.circle.setLatLng([lat, lon]);
+        geofenceState.circle.setRadius(radius);
+    } else {
+        geofenceState.circle = L.circle([lat, lon], {
+            radius,
+            color:       '#2563eb',
+            fillColor:   '#2563eb',
+            fillOpacity: 0.08,
+            weight:      2,
+        }).addTo(mapState.instance);
     }
 }
 
-// ── Refresh ───────────────────────────────────────────────────────────────────
+function clearGeofenceCircle() {
+    if (geofenceState.circle) {
+        mapState.instance.removeLayer(geofenceState.circle);
+        geofenceState.circle = null;
+    }
+}
+
+async function loadGeofence() {
+    try {
+        const gf = await apiFetch('/api/geofence');
+        if (gf) {
+            geofenceState.pending = { lat: gf.lat, lon: gf.lon };
+            drawGeofenceCircle(gf.lat, gf.lon, gf.radius);
+            document.getElementById('geofenceRadius').value = gf.radius;
+            document.getElementById('geofenceStatus').textContent =
+                gf.enabled ? `Zona activa · ${gf.radius}m` : `Zona inactiva · ${gf.radius}m`;
+            document.getElementById('geofenceStatus').className =
+                `geofence-status${gf.enabled ? ' active' : ''}`;
+            document.getElementById('btnGeofenceDelete').style.display = '';
+            document.getElementById('btnGeofenceSave').disabled = false;
+        }
+    } catch {}
+}
+
+function bindGeofenceEvents() {
+    const btnPick   = document.getElementById('btnGeofencePick');
+    const btnSave   = document.getElementById('btnGeofenceSave');
+    const btnDelete = document.getElementById('btnGeofenceDelete');
+    const statusEl  = document.getElementById('geofenceStatus');
+
+    btnPick.addEventListener('click', () => {
+        if (geofenceState.drawMode) {
+            geofenceState.drawMode = false;
+            mapState.instance.getContainer().style.cursor = '';
+            btnPick.textContent = 'Marcar en mapa';
+            btnPick.classList.remove('active');
+            statusEl.textContent = geofenceState.pending
+                ? 'Listo · click Guardar para activar'
+                : 'Sin zona configurada';
+            statusEl.className = 'geofence-status' + (geofenceState.pending ? ' drawing' : '');
+        } else {
+            geofenceState.drawMode = true;
+            mapState.instance.getContainer().style.cursor = 'crosshair';
+            btnPick.textContent = 'Cancelar';
+            btnPick.classList.add('active');
+            statusEl.textContent = 'Haz click en el mapa para centrar la zona';
+            statusEl.className = 'geofence-status drawing';
+        }
+    });
+
+    mapState.instance.on('click', (e) => {
+        if (!geofenceState.drawMode) return;
+        const { lat, lng } = e.latlng;
+        const radius = parseInt(document.getElementById('geofenceRadius').value, 10) || 500;
+        geofenceState.pending = { lat, lon: lng };
+        geofenceState.drawMode = false;
+        mapState.instance.getContainer().style.cursor = '';
+        btnPick.textContent = 'Marcar en mapa';
+        btnPick.classList.remove('active');
+        btnSave.disabled = false;
+        drawGeofenceCircle(lat, lng, radius);
+        statusEl.textContent = `Centro: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        statusEl.className = 'geofence-status drawing';
+    });
+
+    document.getElementById('geofenceRadius').addEventListener('input', () => {
+        if (geofenceState.circle && geofenceState.pending) {
+            const r = parseInt(document.getElementById('geofenceRadius').value, 10) || 500;
+            geofenceState.circle.setRadius(r);
+        }
+    });
+
+    btnSave.addEventListener('click', async () => {
+        if (!geofenceState.pending) return;
+        const radius = parseInt(document.getElementById('geofenceRadius').value, 10) || 500;
+        try {
+            await apiFetch('/api/geofence', {
+                method: 'POST',
+                body:   JSON.stringify({
+                    lat:     geofenceState.pending.lat,
+                    lon:     geofenceState.pending.lon,
+                    radius,
+                    enabled: true,
+                }),
+            });
+            statusEl.textContent = `Zona activa · ${radius}m`;
+            statusEl.className   = 'geofence-status active';
+            btnDelete.style.display = '';
+            drawGeofenceCircle(geofenceState.pending.lat, geofenceState.pending.lon, radius);
+        } catch {
+            statusEl.textContent = 'Error al guardar';
+        }
+    });
+
+    btnDelete.addEventListener('click', async () => {
+        if (!confirm('¿Eliminar la zona segura?')) return;
+        try {
+            const { apiUrl, apiToken } = getSettings();
+            await fetch(`${apiUrl}/api/geofence`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${apiToken}` },
+            });
+            clearGeofenceCircle();
+            geofenceState.pending = null;
+            statusEl.textContent    = 'Sin zona configurada';
+            statusEl.className      = 'geofence-status';
+            btnDelete.style.display = 'none';
+            btnSave.disabled        = true;
+        } catch {}
+    });
+}
+
+// ── WebSocket ─────────────────────────────────────────────────────────────────
+
+let ws                = null;
+let wsReconnectDelay  = 1_000;
+let wsConnected       = false;
+
+function connectWS() {
+    const { apiUrl, apiToken } = getSettings();
+    if (!apiToken) return;
+
+    const wsUrl = apiUrl
+        .replace(/^https/, 'wss')
+        .replace(/^http/, 'ws')
+        .replace(/\/$/, '') + '/ws?token=' + encodeURIComponent(apiToken);
+
+    ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+        wsConnected      = true;
+        wsReconnectDelay = 1_000;
+        setStatus(true);
+    };
+
+    ws.onmessage = (event) => {
+        try {
+            const msg = JSON.parse(event.data);
+            switch (msg.type) {
+                case 'location':
+                    updateDeviceInfo(msg.data);
+                    updateMap(msg.data, null);
+                    setStatus(true);
+                    break;
+                case 'cmd_result':
+                    updateCommandLog(msg.data);
+                    if (!cmdLog.find(e => e.id === msg.data.id)) {
+                        loadCommandHistory();
+                    }
+                    break;
+                case 'photo':
+                    fetchPhotoGallery();
+                    break;
+                case 'geofence_breach':
+                    sendNotification(
+                        'Alerta: zona segura abandonada',
+                        `El dispositivo salió de la zona (${Math.round(msg.data.distance)}m del centro)`
+                    );
+                    break;
+            }
+        } catch {}
+    };
+
+    ws.onerror = () => {};
+
+    ws.onclose = () => {
+        wsConnected      = false;
+        wsReconnectDelay = Math.min(wsReconnectDelay * 2, 30_000);
+        setStatus(false);
+        setTimeout(connectWS, wsReconnectDelay);
+    };
+}
+
+// ── Refresh (HTTP fallback) ───────────────────────────────────────────────────
 
 async function refresh() {
     try {
@@ -165,65 +570,63 @@ async function refresh() {
             apiFetch('/api/location/latest'),
             apiFetch('/api/location/history?limit=100'),
         ]);
-        setStatus(true);
-        setLastUpdate();
+        if (!wsConnected) setStatus(true);
         if (latest) {
             updateDeviceInfo(latest);
             updateMap(latest, history || []);
-        } else {
-            document.getElementById('statusText').textContent = 'En línea – esperando primer ping';
+        } else if (!wsConnected) {
+            document.getElementById('statusText').textContent = 'WAITING';
         }
+        if (history) renderHistory(history);
     } catch (err) {
-        setStatus(false);
+        if (!wsConnected) setStatus(false);
         console.warn('Refresh error:', err.message);
     }
-    // Se ejecuta siempre; el panel de foto aparece solo cuando hay imágenes
-    await fetchLatestPhoto();
+    await fetchPhotoGallery();
 }
 
 // ── Commands ──────────────────────────────────────────────────────────────────
 
 async function sendCommand(command, args) {
     const feedback = document.getElementById('cmdFeedback');
-    feedback.textContent = `Enviando ${command}…`;
+    feedback.textContent = `Sending ${command}…`;
     feedback.className   = 'feedback';
 
     try {
         const body   = JSON.stringify({ command, args: args || '' });
         const result = await apiFetch('/api/command', { method: 'POST', body });
-        feedback.textContent = `✓ ${command} encolado (id ${result.id})`;
+
+        // Agregar al log de comandos como "pending"
+        cmdLog.unshift({ id: result.id, command, args: args || '', status: 'pending', created_at: new Date().toISOString() });
+        if (cmdLog.length > 8) cmdLog.pop();
+        renderCmdLog();
+
+        feedback.textContent = `✓ ${command} queued (id ${result.id})`;
         feedback.className   = 'feedback ok';
     } catch (err) {
         feedback.textContent = `✗ Error: ${err.message}`;
         feedback.className   = 'feedback err';
     }
 
-    setTimeout(() => {
-        feedback.textContent = '';
-        feedback.className   = 'feedback';
-    }, 4000);
+    setTimeout(() => { feedback.textContent = ''; feedback.className = 'feedback'; }, 4000);
 }
 
-// ── Event binding ─────────────────────────────────────────────────────────────
+// ── Events ────────────────────────────────────────────────────────────────────
 
 function bindEvents() {
     document.querySelectorAll('[data-cmd]').forEach(btn => {
         btn.addEventListener('click', () => {
             const cmd  = btn.dataset.cmd;
             const args = btn.dataset.args || '';
-
-            // WIPE requiere doble confirmación explícita
             if (btn.dataset.wipe === 'true') {
-                if (!confirm('⚠️ ¿Borrar TODOS los datos del dispositivo?\nEsta acción es IRREVERSIBLE.')) return;
-                if (!confirm('SEGUNDA CONFIRMACIÓN\n¿Ejecutar borrado total de fábrica?')) return;
+                if (!confirm('⚠️ Wipe ALL device data?\nThis action is IRREVERSIBLE.')) return;
+                if (!confirm('SECOND CONFIRMATION\nExecute factory reset?')) return;
                 sendCommand('WIPE', 'CONFIRM');
                 return;
             }
-
             if (btn.dataset.confirm === 'true') {
-                if (!confirm(`¿Ejecutar ${cmd}?\nEsta acción no se puede deshacer.`)) return;
+                if (!confirm(`Execute ${cmd}?\nThis cannot be undone.`)) return;
             }
-
             sendCommand(cmd, args);
         });
     });
@@ -233,8 +636,28 @@ function bindEvents() {
         const token = document.getElementById('apiToken').value.trim();
         if (!url) return;
         persistSettings(url, token);
-        mapState.centered = false; // re-centrar al reconectar
+        mapState.centered = false;
+        if (ws) ws.close();
+        connectWS();
         refresh();
+    });
+
+    // Toggles
+    bindCollapseToggle('historyToggle',  'historyList');
+    bindCollapseToggle('cmdLogToggle',   'cmdLogList');
+    bindCollapseToggle('geofenceToggle', 'geofenceBody');
+
+    // Notification bell
+    document.getElementById('btnNotif').addEventListener('click', requestNotifications);
+}
+
+function bindCollapseToggle(toggleId, listId) {
+    const toggle  = document.getElementById(toggleId);
+    const list    = document.getElementById(listId);
+    const section = toggle.closest('.history-section');
+    toggle.addEventListener('click', () => {
+        const collapsed = section.classList.toggle('collapsed');
+        list.classList.toggle('hidden', collapsed);
     });
 }
 
@@ -244,12 +667,104 @@ function loadSettingsIntoForm() {
     document.getElementById('apiToken').value = apiToken;
 }
 
+// ── Auth ──────────────────────────────────────────────────────────────────────
+
+function showLogin() {
+    document.getElementById('loginOverlay').classList.remove('hidden');
+}
+
+function hideLogin() {
+    document.getElementById('loginOverlay').classList.add('hidden');
+}
+
+function bindLoginEvents() {
+    const btn   = document.getElementById('loginBtn');
+    const errEl = document.getElementById('loginError');
+
+    const { apiUrl } = getSettings();
+    document.getElementById('loginUrl').value = apiUrl || window.location.origin;
+
+    btn.addEventListener('click', async () => {
+        const url   = document.getElementById('loginUrl').value.trim();
+        const token = document.getElementById('loginToken').value.trim();
+
+        if (!url || !token) { errEl.textContent = 'Completa los dos campos.'; return; }
+
+        btn.disabled     = true;
+        btn.textContent  = 'Conectando…';
+        errEl.textContent = '';
+
+        try {
+            const res = await fetch(`${url.replace(/\/$/, '')}/api/location/latest`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            if (res.status === 401) {
+                errEl.textContent = 'Token incorrecto.';
+                btn.disabled    = false;
+                btn.textContent = 'Conectar';
+                return;
+            }
+            persistSettings(url, token);
+            loadSettingsIntoForm();
+            hideLogin();
+            mapState.centered = false;
+            startRefreshing();
+            connectWS();
+        } catch (err) {
+            errEl.textContent = `Error de conexión: ${err.message}`;
+            btn.disabled    = false;
+            btn.textContent = 'Conectar';
+        }
+    });
+
+    document.getElementById('loginOverlay').querySelectorAll('input').forEach(inp => {
+        inp.addEventListener('keydown', e => { if (e.key === 'Enter') btn.click(); });
+    });
+}
+
+let refreshInterval = null;
+
+function startRefreshing() {
+    if (refreshInterval) return;
+    refresh();
+    loadCommandHistory();
+    loadGeofence();
+    refreshInterval = setInterval(refresh, 30_000);
+    setInterval(loadCommandHistory, 120_000);
+}
+
+async function checkAuth() {
+    const { apiToken } = getSettings();
+    if (!apiToken) { showLogin(); return; }
+
+    try {
+        const { apiUrl } = getSettings();
+        const res = await fetch(`${apiUrl}/api/location/latest`, {
+            headers: { 'Authorization': `Bearer ${apiToken}` },
+        });
+        if (res.status === 401) {
+            localStorage.removeItem('tracer_token');
+            showLogin();
+        } else {
+            hideLogin();
+            startRefreshing();
+            connectWS();
+        }
+    } catch {
+        hideLogin();
+        startRefreshing();
+        connectWS();
+    }
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
     initMap();
     loadSettingsIntoForm();
     bindEvents();
-    refresh();
-    setInterval(refresh, 30_000);
+    bindLoginEvents();
+    bindGeofenceEvents();
+    syncNotifBtn();
+    checkAuth();
 });

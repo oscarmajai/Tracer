@@ -9,11 +9,21 @@ import android.os.BatteryManager
 import android.os.Build
 import android.telephony.SmsManager
 import android.util.Log
+import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import com.tracer.app.admin.TracerDeviceAdminReceiver
 import com.tracer.app.service.TracerLocationService
+import com.tracer.app.sim.SimManager
 
-class CommandHandler(private val context: Context) {
+/**
+ * @param onRemoteResult  Callback invocado cuando sender == "remote".
+ *                        Recibe el texto de respuesta para enviarlo al servidor.
+ */
+class CommandHandler(
+    private val context: Context,
+    private val onRemoteResult: ((String) -> Unit)? = null,
+) {
 
     private val pin = PinManager(context).getPin()
 
@@ -28,31 +38,42 @@ class CommandHandler(private val context: Context) {
         Log.d(TAG, "Command $command from $sender")
 
         when (command) {
-            "LOCATE"  -> handleLocate(sender)
-            "ALERT"   -> handleAlert(sender, args)
-            "RING"    -> handleRing(sender, args)
-            "BATTERY" -> handleBattery(sender)
-            "STATUS"  -> handleStatus(sender)
-            "LOCK"    -> handleLock(sender)
-            "PHOTO"   -> handlePhoto(sender)
-            "WIPE"    -> handleWipe(sender, args)
-            else      -> if (sender != "remote") reply(sender, "Tracer: comando desconocido")
+            "LOCATE"     -> handleLocate(sender)
+            "ALERT"      -> handleAlert(sender, args)
+            "RING"       -> handleRing(sender, args)
+            "BATTERY"    -> handleBattery(sender)
+            "STATUS"     -> handleStatus(sender)
+            "LOCK"       -> handleLock(sender)
+            "PHOTO"      -> handlePhoto(sender)
+            "WIPE"       -> handleWipe(sender, args)
+            "GEO_BREACH" -> handleGeoBreach(sender)
+            else         -> if (sender != "remote") reply(sender, "Tracer: comando desconocido")
         }
     }
 
     private fun handleLocate(sender: String) {
         val client = LocationServices.getFusedLocationProviderClient(context)
         try {
-            client.lastLocation.addOnSuccessListener { location ->
-                if (location != null) {
-                    val battery = getBatteryLevel()
-                    val mapsUrl = "maps.google.com/?q=${location.latitude},${location.longitude}"
-                    reply(sender, "LOCATE ${location.latitude},${location.longitude} bat:$battery% $mapsUrl")
-                } else {
-                    setAlertMode(true)
-                    reply(sender, "Tracer: sin ubicacion reciente, modo ALERT activado")
+            val request = CurrentLocationRequest.Builder()
+                .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+                .setMaxUpdateAgeMillis(2 * 60 * 1000L)
+                .setDurationMillis(10_000L)
+                .build()
+
+            client.getCurrentLocation(request, null)
+                .addOnSuccessListener { location ->
+                    if (location != null) {
+                        val battery = getBatteryLevel()
+                        val mapsUrl = "maps.google.com/?q=${location.latitude},${location.longitude}"
+                        reply(sender, "LOCATE ${location.latitude},${location.longitude} bat:$battery% $mapsUrl")
+                    } else {
+                        setAlertMode(true)
+                        reply(sender, "Tracer: sin ubicacion reciente, modo ALERT activado")
+                    }
                 }
-            }
+                .addOnFailureListener {
+                    reply(sender, "Tracer: error obteniendo ubicacion")
+                }
         } catch (e: SecurityException) {
             reply(sender, "Tracer: sin permiso de ubicacion")
         }
@@ -108,6 +129,16 @@ class CommandHandler(private val context: Context) {
         } else {
             context.startService(intent)
         }
+        // PHOTO no llama reply() aquí; el resultado lo reporta captureAndUploadPhoto()
+    }
+
+    private fun handleGeoBreach(sender: String) {
+        setAlertMode(true)
+        val trustedNumber = SimManager(context).getTrustedNumber()
+        if (trustedNumber.length >= 7) {
+            sendSms(context, trustedNumber, "Tracer ALERTA: dispositivo fuera de zona segura")
+        }
+        reply(sender, "Tracer GEO_BREACH: modo alerta activado, zona segura abandonada")
     }
 
     private fun handleWipe(sender: String, args: List<String>) {
@@ -122,12 +153,13 @@ class CommandHandler(private val context: Context) {
         val isConfirm = args.firstOrNull()?.uppercase() == "CONFIRM"
 
         if (sender == "remote") {
-            // Desde web: requiere args=CONFIRM (el panel JS hace doble confirm antes de enviar)
-            if (isConfirm) dpm.wipeData(0)
+            if (isConfirm) {
+                reply(sender, "Tracer WIPE: ejecutando borrado de fábrica...")
+                dpm.wipeData(0)
+            }
             return
         }
 
-        // Desde SMS: flujo de dos pasos con timeout de 60s
         if (isConfirm) {
             val pending = pendingWipe
             val elapsed = System.currentTimeMillis() - (pending?.timestamp ?: 0L)
@@ -160,7 +192,10 @@ class CommandHandler(private val context: Context) {
     }
 
     private fun reply(to: String, message: String) {
-        if (to == "remote") return
+        if (to == "remote") {
+            onRemoteResult?.invoke(message)
+            return
+        }
         sendSms(context, to, message)
     }
 
