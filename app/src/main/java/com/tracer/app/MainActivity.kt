@@ -31,7 +31,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.tracer.app.admin.TracerDeviceAdminReceiver
 import com.tracer.app.service.TracerLocationService
-import com.tracer.app.sim.SimManager
 import com.tracer.app.sms.PinManager
 
 class MainActivity : ComponentActivity() {
@@ -90,12 +89,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun SetupScreen() {
         val pinManager    = remember { PinManager(this) }
-        val simManager    = remember { SimManager(this) }
-        val prefs         = remember { getSharedPreferences("tracer_config", MODE_PRIVATE) }
-
         var pin           by remember { mutableStateOf(pinManager.getPin()) }
-        var deviceName    by remember { mutableStateOf(prefs.getString("device_name", "") ?: "") }
-        var trustedNumber by remember { mutableStateOf(simManager.getTrustedNumber()) }
         var isAdminActive by remember { mutableStateOf(dpm.isAdminActive(adminComponent)) }
         var showHideDialog by remember { mutableStateOf(false) }
 
@@ -113,7 +107,7 @@ class MainActivity : ComponentActivity() {
             AlertDialog(
                 onDismissRequest = { showHideDialog = false },
                 title   = { Text("Ocultar ícono") },
-                text    = { Text("El ícono desaparecerá del launcher.\n\nPara volver a esta pantalla marca *#*#7223#*#* en el teléfono.") },
+                text    = { Text("El ícono desaparecerá del launcher.\n\nPara volver marca *#*#7223#*#*.") },
                 confirmButton = {
                     TextButton(onClick = { showHideDialog = false; hideIcon() }) { Text("Ocultar") }
                 },
@@ -142,23 +136,10 @@ class MainActivity : ComponentActivity() {
                     "Configuración",
                     style    = MaterialTheme.typography.bodySmall,
                     color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 24.dp)
+                    modifier = Modifier.padding(bottom = 28.dp)
                 )
 
-                // ── Acción rápida ─────────────────────────────────────────
-                Button(
-                    onClick = {
-                        forceLocate()
-                        Toast.makeText(this@MainActivity, "Enviando ubicación…", Toast.LENGTH_SHORT).show()
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text("Enviar ubicación ahora") }
-
-                Spacer(Modifier.height(28.dp))
-                HorizontalDivider()
-                Spacer(Modifier.height(20.dp))
-
-                // ── PIN ───────────────────────────────────────────────────
+                // ── PIN ───────────────────────────────────────────────────────
                 SectionLabel("PIN de comandos SMS")
                 OutlinedTextField(
                     value                = pin,
@@ -179,52 +160,11 @@ class MainActivity : ComponentActivity() {
                     }
                 }) { Text("Guardar PIN") }
 
-                Spacer(Modifier.height(20.dp))
-
-                // ── Nombre del dispositivo ────────────────────────────────
-                SectionLabel("Nombre del dispositivo")
-                OutlinedTextField(
-                    value         = deviceName,
-                    onValueChange = { deviceName = it },
-                    label         = { Text("Nombre") },
-                    placeholder   = { Text("Mi teléfono") },
-                    singleLine    = true,
-                    modifier      = Modifier.fillMaxWidth()
-                )
-                Spacer(Modifier.height(8.dp))
-                Button(onClick = {
-                    prefs.edit().putString("device_name", deviceName.trim()).apply()
-                    Toast.makeText(this@MainActivity, "Nombre guardado", Toast.LENGTH_SHORT).show()
-                }) { Text("Guardar nombre") }
-
-                Spacer(Modifier.height(20.dp))
-
-                // ── Número de confianza ───────────────────────────────────
-                SectionLabel("Número de confianza (alertas SIM)")
-                OutlinedTextField(
-                    value           = trustedNumber,
-                    onValueChange   = { trustedNumber = it },
-                    label           = { Text("Teléfono") },
-                    placeholder     = { Text("+52 55 1234 5678") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                    singleLine      = true,
-                    modifier        = Modifier.fillMaxWidth()
-                )
-                Spacer(Modifier.height(8.dp))
-                Button(onClick = {
-                    if (trustedNumber.length >= 7) {
-                        simManager.setTrustedNumber(trustedNumber)
-                        Toast.makeText(this@MainActivity, "Número guardado", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(this@MainActivity, "Número inválido", Toast.LENGTH_SHORT).show()
-                    }
-                }) { Text("Guardar número") }
-
                 Spacer(Modifier.height(24.dp))
                 HorizontalDivider()
                 Spacer(Modifier.height(20.dp))
 
-                // ── Bloqueo remoto (admin) ────────────────────────────────
+                // ── Device Admin ──────────────────────────────────────────────
                 SectionLabel("Bloqueo remoto (comando LOCK)")
                 Text(
                     if (isAdminActive) "● Activo" else "● No activado",
@@ -237,7 +177,7 @@ class MainActivity : ComponentActivity() {
                             Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
                                 putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent)
                                 putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,
-                                    "Necesario para el comando LOCK")
+                                    "Necesario para los comandos LOCK y WIPE")
                             }
                         )
                     }) { Text("Activar permisos de admin") }
@@ -247,7 +187,7 @@ class MainActivity : ComponentActivity() {
                 HorizontalDivider()
                 Spacer(Modifier.height(20.dp))
 
-                // ── Ocultar ícono ─────────────────────────────────────────
+                // ── Ocultar ───────────────────────────────────────────────────
                 OutlinedButton(
                     onClick  = { showHideDialog = true },
                     modifier = Modifier.fillMaxWidth(),
@@ -258,7 +198,7 @@ class MainActivity : ComponentActivity() {
 
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    "Para volver a esta pantalla: marca *#*#7223#*#*",
+                    "Para volver: marca *#*#7223#*#*",
                     style    = MaterialTheme.typography.bodySmall,
                     color    = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 36.dp)
@@ -287,14 +227,6 @@ class MainActivity : ComponentActivity() {
         )
         Toast.makeText(this, "Ícono ocultado. Marca *#*#7223#*#* para volver.", Toast.LENGTH_LONG).show()
         finish()
-    }
-
-    private fun forceLocate() {
-        val intent = Intent(this, TracerLocationService::class.java).apply {
-            action = TracerLocationService.ACTION_FORCE_LOCATE
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(intent)
-        else startService(intent)
     }
 
     // ── Permisos (cadena secuencial) ──────────────────────────────────────────

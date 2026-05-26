@@ -79,6 +79,7 @@ export default function App() {
   // ── Refs ──────────────────────────────────────────────────────────────────
   const lowBatNotifiedRef = useRef(false);
   const prevStatusOnlineRef = useRef(null);
+  const offlineTimerRef = useRef(null);
   const alertTimerRef = useRef(null);
   const geofencePendingRef = useRef(null);
   const geofenceRadiusRef = useRef(500);
@@ -98,11 +99,23 @@ export default function App() {
   }, []);
 
   const setStatus = useCallback((online) => {
-    if (prevStatusOnlineRef.current === true && !online) {
-      sendNotification('Dispositivo desconectado', 'Tracer dejó de reportar ubicación');
+    if (online) {
+      clearTimeout(offlineTimerRef.current);
+      offlineTimerRef.current = null;
+      if (prevStatusOnlineRef.current === true) return;
+      prevStatusOnlineRef.current = true;
+      setStatusOnline(true);
+    } else {
+      if (offlineTimerRef.current) return;
+      offlineTimerRef.current = setTimeout(() => {
+        offlineTimerRef.current = null;
+        if (prevStatusOnlineRef.current === true) {
+          sendNotification('Dispositivo desconectado', 'Tracer dejó de reportar ubicación');
+        }
+        prevStatusOnlineRef.current = false;
+        setStatusOnline(false);
+      }, 4000);
     }
-    prevStatusOnlineRef.current = online;
-    setStatusOnline(online);
   }, []);
 
   const updateDeviceInfo = useCallback((latest) => {

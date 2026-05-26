@@ -51,8 +51,15 @@ class CommandHandler(
 
         when (command) {
             "LOCATE"      -> handleLocate(sender)
-            "ALERT"       -> handleAlert(sender, args)
-            "RING"        -> handleRing(sender, args)
+            "ALERT",
+            "ALERT_ON",
+            "ALERT_OFF"   -> handleAlert(sender,
+                                 if (command == "ALERT_ON") listOf("ON")
+                                 else if (command == "ALERT_OFF") listOf("OFF")
+                                 else args)
+            "RING",
+            "RING_STOP"   -> handleRing(sender,
+                                 if (command == "RING_STOP") listOf("STOP") else args)
             "BATTERY"     -> handleBattery(sender)
             "STATUS"      -> handleStatus(sender)
             "LOCK"        -> handleLock(sender, args)
