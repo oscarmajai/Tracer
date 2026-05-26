@@ -70,6 +70,7 @@ export default function App() {
   const [alertActive, setAlertActive] = useState(false);
   const [ringActive, setRingActive] = useState(false);
   const [keyguardActive, setKeyguardActive] = useState(false);
+  const [lockActive, setLockActive] = useState(false);
 
   // ── Notifications ─────────────────────────────────────────────────────────
   const [notifGranted, setNotifGranted] = useState(
@@ -84,9 +85,11 @@ export default function App() {
   const geofencePendingRef = useRef(null);
   const geofenceRadiusRef = useRef(500);
   const cmdLogRef = useRef([]);
+  const photosRef = useRef([]);
 
   useEffect(() => { geofenceRadiusRef.current = geofenceRadius; }, [geofenceRadius]);
   useEffect(() => { cmdLogRef.current = cmdLog; }, [cmdLog]);
+  useEffect(() => { photosRef.current = photos; }, [photos]);
 
   // ── Map ───────────────────────────────────────────────────────────────────
   const mapAPI = useMap();
@@ -173,18 +176,27 @@ export default function App() {
       const list = await res.json();
       if (!list || list.length === 0) return;
 
+      // Skip entirely if the filenames haven't changed
+      const incoming = list.map((p) => p.filename).join(',');
+      const current = photosRef.current.map((p) => p.filename).join(',');
+      if (incoming === current) return;
+
       const loaded = await Promise.all(
         list.map(async (photo) => {
+          // Reuse existing blob URL to avoid image flicker
+          const existing = photosRef.current.find((p) => p.filename === photo.filename);
+          if (existing?.blobUrl) return existing;
           const blobUrl = await loadBlobUrl(photo.filename).catch(() => null);
           return { filename: photo.filename, timestamp: photo.timestamp, blobUrl };
         })
       );
 
+      const newPhotos = loaded.filter((p) => p.blobUrl);
       setPhotos((prev) => {
-        prev.forEach((p) => { if (p.blobUrl) URL.revokeObjectURL(p.blobUrl); });
-        return loaded.filter((p) => p.blobUrl);
+        const keepNames = new Set(newPhotos.map((p) => p.filename));
+        prev.forEach((p) => { if (p.blobUrl && !keepNames.has(p.filename)) URL.revokeObjectURL(p.blobUrl); });
+        return newPhotos;
       });
-      setShowOldPhotos(false);
     } catch {}
   }, []);
 
@@ -320,12 +332,20 @@ export default function App() {
 
   const confirmLock = useCallback(() => {
     setModal(null);
+    setLockActive(true);
     sendCmd('LOCK', lockMessage.trim());
   }, [lockMessage, sendCmd]);
 
   const confirmResetPin = useCallback(() => {
     if (newPin.trim().length < 4) return;
     setModal(null);
+    sendCmd('RESET_PIN', newPin.trim());
+  }, [newPin, sendCmd]);
+
+  const confirmUnlock = useCallback(() => {
+    if (newPin.trim().length < 4) return;
+    setModal(null);
+    setLockActive(false);
     sendCmd('RESET_PIN', newPin.trim());
   }, [newPin, sendCmd]);
 
@@ -541,8 +561,9 @@ export default function App() {
 
     photos, showOldPhotos, setShowOldPhotos,
 
-    alertActive, ringActive, keyguardActive,
+    alertActive, ringActive, keyguardActive, lockActive,
     toggleAlert, toggleRing, toggleKeyguard,
+    confirmUnlock,
 
     notifGranted, requestNotifications,
 

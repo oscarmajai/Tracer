@@ -70,6 +70,7 @@ const COMMANDS = [
   },
   {
     key: 'lock', label: 'Bloquear', desc: 'Bloquear + mensaje', modal: true,
+    toggle: 'lockActive', activeLabel: 'Bloqueado', activeDesc: 'Establecer PIN y desbloquear',
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
         fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -139,10 +140,15 @@ export default function SidebarLeft() {
     alertActive, toggleAlert,
     ringActive, toggleRing,
     keyguardActive, toggleKeyguard,
+    lockActive,
     feedbackText, feedbackMod,
   } = useTracer();
 
   function handleCmd(cmd) {
+    if (cmd.key === 'lock') {
+      openModal(lockActive ? 'unlock' : 'lock');
+      return;
+    }
     if (cmd.modal) { openModal(cmd.key); return; }
     if (cmd.confirm) { sendCmdConfirm(cmd.key); return; }
     if (cmd.toggle === 'alertActive') { toggleAlert(); return; }
@@ -152,6 +158,7 @@ export default function SidebarLeft() {
   }
 
   function isActive(cmd) {
+    if (cmd.toggle === 'lockActive') return lockActive;
     if (cmd.toggle === 'alertActive') return alertActive;
     if (cmd.toggle === 'ringActive') return ringActive;
     if (cmd.toggle === 'keyguardActive') return keyguardActive;

@@ -102,6 +102,38 @@ function ResetPinModal() {
   );
 }
 
+function UnlockModal() {
+  const { setModal, newPin, setNewPin, confirmUnlock } = useTracer();
+  const onKey = (e) => {
+    if (e.key === 'Enter') confirmUnlock();
+    if (e.key === 'Escape') setModal(null);
+  };
+  return (
+    <ModalOverlay
+      name="unlock"
+      title="Desbloquear dispositivo"
+      desc="Establece un PIN temporal para poder desbloquear el dispositivo. Luego úsalo en la pantalla de bloqueo."
+    >
+      <label>Nuevo PIN (mín. 4 dígitos)</label>
+      <input
+        type="password"
+        value={newPin}
+        onChange={(e) => setNewPin(e.target.value)}
+        inputMode="numeric"
+        placeholder="••••"
+        maxLength={16}
+        autoComplete="new-password"
+        onKeyDown={onKey}
+        autoFocus
+      />
+      <div className="modal-actions">
+        <button className="modal-btn-cancel" onClick={() => setModal(null)}>Cancelar</button>
+        <button className="modal-btn-confirm" onClick={confirmUnlock}>Desbloquear</button>
+      </div>
+    </ModalOverlay>
+  );
+}
+
 function WipeModal() {
   const { setModal, wipePassword, setWipePassword, wipeError, wipeLoading, confirmWipe } = useTracer();
   const onKey = (e) => {
@@ -144,6 +176,7 @@ export default function Modals() {
     <>
       <CallbackModal />
       <LockModal />
+      <UnlockModal />
       <ResetPinModal />
       <WipeModal />
     </>
