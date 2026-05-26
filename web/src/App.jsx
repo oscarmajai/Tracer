@@ -66,6 +66,9 @@ export default function App() {
   const [photos, setPhotos] = useState([]);
   const [showOldPhotos, setShowOldPhotos] = useState(false);
 
+  // ── Intruder alert modal ───────────────────────────────────────────────────
+  const [intruderAlert, setIntruderAlert] = useState(null);
+
   // ── Toggles ───────────────────────────────────────────────────────────────
   const [alertActive, setAlertActive] = useState(false);
   const [ringActive, setRingActive] = useState(false);
@@ -407,15 +410,24 @@ export default function App() {
 
   // ── Device alert ──────────────────────────────────────────────────────────
   const handleDeviceAlert = useCallback((data) => {
-    const labels = { sim_change: 'Alerta: SIM cambiada', pin_fail: 'Alerta: intento de desbloqueo' };
+    if (data.type === 'pin_fail') {
+      sendNotification(
+        'Intento de acceso fallido',
+        `Intento #${data.attempt_num ?? 1} — se ha capturado una foto`
+      );
+      fetchPhotos();
+      setIntruderAlert(data);
+      return;
+    }
+    const labels = { sim_change: 'Alerta: SIM cambiada' };
     const title = labels[data.type] || 'Alerta del dispositivo';
-    const icon = data.type === 'sim_change' ? '⚠️' : data.type === 'pin_fail' ? '📷' : '🔔';
+    const icon = data.type === 'sim_change' ? '⚠️' : '🔔';
     sendNotification(title, data.message || '');
     setAlertBannerText(`${icon} ${title}${data.message ? ': ' + data.message : ''}`);
     setAlertBannerVisible(true);
     clearTimeout(alertTimerRef.current);
     alertTimerRef.current = setTimeout(() => setAlertBannerVisible(false), 8000);
-  }, []);
+  }, [fetchPhotos]);
 
   // ── WebSocket messages ────────────────────────────────────────────────────
   const handleWsMessage = useCallback((msg) => {
@@ -559,6 +571,7 @@ export default function App() {
 
     alertBannerText, alertBannerVisible,
 
+    intruderAlert, setIntruderAlert,
     photos, showOldPhotos, setShowOldPhotos,
 
     alertActive, ringActive, keyguardActive, lockActive,

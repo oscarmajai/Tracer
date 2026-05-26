@@ -63,6 +63,7 @@ class TracerLocationService : Service() {
         const val EXTRA_CMD_ID          = "cmd_id"
         const val ACTION_FORCE_LOCATE   = "com.tracer.app.FORCE_LOCATE"
         const val ACTION_PIN_FAIL_PHOTO = "com.tracer.app.PIN_FAIL_PHOTO"
+        const val EXTRA_ATTEMPT_NUM     = "attempt_num"
 
         const val PREFS_STATUS    = "tracer_status"
         const val KEY_LAST_LAT    = "last_lat"
@@ -157,12 +158,25 @@ class TracerLocationService : Service() {
                 serviceScope.launch { forceLocateAndPost() }
             }
             ACTION_PIN_FAIL_PHOTO -> {
+                val attemptNum = intent.getIntExtra(EXTRA_ATTEMPT_NUM, 1)
                 serviceScope.launch {
                     captureAndUploadPhoto("remote", null)
+                    val statusPrefs = getSharedPreferences(PREFS_STATUS, MODE_PRIVATE)
+                    val lat = statusPrefs.getString(KEY_LAST_LAT, null)?.toDoubleOrNull()
+                    val lon = statusPrefs.getString(KEY_LAST_LON, null)?.toDoubleOrNull()
                     runCatching {
                         apiService.postAlert(
                             TracerApiService.AUTH_TOKEN,
-                            AlertPayload("pin_fail", "Foto tomada tras intentos fallidos de PIN")
+                            AlertPayload(
+                                type = "pin_fail",
+                                message = "Intento #$attemptNum de desbloqueo fallido",
+                                lat = lat,
+                                lon = lon,
+                                battery = getBatteryLevel(),
+                                signal = lastSignalLevel,
+                                device_id = readAndroidId(),
+                                attempt_num = attemptNum,
+                            )
                         )
                     }
                 }

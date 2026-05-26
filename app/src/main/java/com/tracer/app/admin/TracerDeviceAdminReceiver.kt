@@ -22,11 +22,7 @@ class TracerDeviceAdminReceiver : DeviceAdminReceiver() {
         val count = prefs.getInt(KEY_FAIL_COUNT, 0) + 1
         prefs.edit().putInt(KEY_FAIL_COUNT, count).apply()
         Log.w(TAG, "Password failed: attempt $count")
-
-        if (count >= PIN_FAIL_THRESHOLD) {
-            prefs.edit().putInt(KEY_FAIL_COUNT, 0).apply()
-            triggerPinFailPhoto(context)
-        }
+        triggerPinFailPhoto(context, count)
     }
 
     override fun onPasswordSucceeded(context: Context, intent: Intent) {
@@ -34,22 +30,22 @@ class TracerDeviceAdminReceiver : DeviceAdminReceiver() {
             .edit().putInt(KEY_FAIL_COUNT, 0).apply()
     }
 
-    private fun triggerPinFailPhoto(context: Context) {
+    private fun triggerPinFailPhoto(context: Context, attemptNum: Int) {
         val intent = Intent(context, TracerLocationService::class.java).apply {
             action = TracerLocationService.ACTION_PIN_FAIL_PHOTO
+            putExtra(TracerLocationService.EXTRA_ATTEMPT_NUM, attemptNum)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(intent)
         } else {
             context.startService(intent)
         }
-        Log.w(TAG, "PIN fail threshold reached, triggering photo")
+        Log.w(TAG, "PIN fail #$attemptNum — triggering photo")
     }
 
     companion object {
         private const val TAG = "TracerAdmin"
         private const val PREFS_NAME = "tracer_config"
         private const val KEY_FAIL_COUNT = "pin_fail_count"
-        private const val PIN_FAIL_THRESHOLD = 3
     }
 }

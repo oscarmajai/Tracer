@@ -923,4 +923,137 @@ html, body, #root {
 
 .modal-btn-confirm.danger { background: var(--danger); }
 .modal-btn-confirm.danger:hover { background: #dc2626; }
+
+/* ── Intruder alert modal ─────────────────────────────────────────────────── */
+
+.intruder-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 600;
+    padding: 16px;
+}
+
+.intruder-modal {
+    background: var(--sidebar);
+    border-radius: var(--radius);
+    width: 100%;
+    max-width: 380px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,.4);
+    border: 1px solid var(--danger);
+}
+
+.intruder-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background: #fef2f2;
+    border-bottom: 1px solid #fecaca;
+}
+
+.intruder-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--danger);
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.intruder-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--subtext);
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    border-radius: 4px;
+    transition: background .12s;
+}
+.intruder-close:hover { background: var(--border); }
+
+.intruder-photo-wrap {
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: #111;
+    overflow: hidden;
+}
+
+.intruder-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.intruder-photo-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #555;
+    font-size: 12px;
+}
+
+.intruder-data {
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.intruder-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+}
+.intruder-row span { color: var(--subtext); }
+.intruder-row strong { color: var(--text); font-weight: 600; }
+
+.intruder-attempt {
+    color: var(--danger) !important;
+    font-size: 14px !important;
+}
+
+.intruder-map-link {
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 500;
+}
+.intruder-map-link:hover { text-decoration: underline; }
+
+.intruder-note {
+    font-size: 11px;
+    color: var(--subtext-lt);
+    margin-top: 4px;
+    font-style: italic;
+    line-height: 1.4;
+}
+
+.intruder-dismiss {
+    display: block;
+    width: calc(100% - 28px);
+    margin: 0 14px 14px;
+    padding: 9px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background .12s;
+}
+.intruder-dismiss:hover { background: var(--border); }
 .modal-btn-confirm:disabled { opacity: .65; cursor: not-allowed; }

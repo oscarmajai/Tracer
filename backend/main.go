@@ -158,8 +158,14 @@ type PhotoInfo struct {
 }
 
 type AlertPayload struct {
-	Type    string `json:"type"`
-	Message string `json:"message,omitempty"`
+	Type       string   `json:"type"`
+	Message    string   `json:"message,omitempty"`
+	Lat        *float64 `json:"lat,omitempty"`
+	Lon        *float64 `json:"lon,omitempty"`
+	Battery    *int     `json:"battery,omitempty"`
+	Signal     *int     `json:"signal,omitempty"`
+	DeviceID   string   `json:"device_id,omitempty"`
+	AttemptNum *int     `json:"attempt_num,omitempty"`
 }
 
 var validFilename = regexp.MustCompile(`^[a-zA-Z0-9_.\-]+\.jpg$`)
@@ -679,7 +685,17 @@ func postDeviceAlert(c *fiber.Ctx) error {
 	}
 	ts := time.Now().UTC().Format(time.RFC3339)
 	log.Printf("alert: %s — %s", payload.Type, payload.Message)
-	go broadcast("alert", fiber.Map{"type": payload.Type, "message": payload.Message, "timestamp": ts})
+	go broadcast("alert", fiber.Map{
+		"type":        payload.Type,
+		"message":     payload.Message,
+		"timestamp":   ts,
+		"lat":         payload.Lat,
+		"lon":         payload.Lon,
+		"battery":     payload.Battery,
+		"signal":      payload.Signal,
+		"device_id":   payload.DeviceID,
+		"attempt_num": payload.AttemptNum,
+	})
 	return c.SendStatus(fiber.StatusOK)
 }
 
