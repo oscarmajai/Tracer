@@ -587,5 +587,39 @@ function TweakControls({ t, setTweak }) {
   );
 }
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+  static getDerivedStateFromError(err) {
+    return { error: err };
+  }
+  componentDidCatch(err) {
+    console.error('[Tracer] Error de renderizado:', err);
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{
+          position: 'fixed', inset: 0, display: 'flex', alignItems: 'center',
+          justifyContent: 'center', background: '#fff', padding: 24, zIndex: 9999
+        }}>
+          <div style={{
+            background: '#fee2e2', border: '1px solid #dc2626', padding: 20,
+            borderRadius: 8, fontFamily: 'monospace', fontSize: 12,
+            maxWidth: 700, maxHeight: '80vh', overflow: 'auto', whiteSpace: 'pre-wrap'
+          }}>
+            <strong>Error de renderizado:</strong>{'\n\n'}
+            {String(this.state.error)}{'\n\n'}
+            {this.state.error?.stack || ''}
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
+root.render(<ErrorBoundary><App /></ErrorBoundary>);
