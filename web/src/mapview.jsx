@@ -23,6 +23,10 @@ function MapView({ devices, selectedId, setSelectedId, ringing, onAction, status
   // Init Leaflet map
   React.useEffect(() => {
     if (!mapDivRef.current || mapInstanceRef.current) return;
+    if (typeof L === 'undefined') {
+      console.error('Leaflet (L) no está disponible. Verifica que el script de Leaflet cargó correctamente.');
+      return;
+    }
 
     const map = L.map(mapDivRef.current, {
       zoomControl: false,
@@ -47,6 +51,7 @@ function MapView({ devices, selectedId, setSelectedId, ringing, onAction, status
   // Update marker when device location changes
   React.useEffect(() => {
     if (!mapInstanceRef.current || !device || !device.lat || !device.lon) return;
+    if (typeof L === 'undefined') return;
 
     const map = mapInstanceRef.current;
     const { lat, lon, accuracy, status } = device;
