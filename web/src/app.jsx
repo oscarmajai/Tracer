@@ -44,7 +44,7 @@ const COMMAND_TOASTS = {
 
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
-  const [screen, setScreen] = React.useState('loading');
+  const [screen, setScreen] = React.useState('login');
   const [view, setView] = React.useState('map');
 
   // Single real device from API
@@ -343,28 +343,7 @@ function App() {
   const refreshRef = React.useRef(refresh);
   React.useEffect(() => { refreshRef.current = refresh; }, [refresh]);
 
-  // ── Auth check on mount ───────────────────────────────────────────────
-  React.useEffect(() => {
-    async function checkAuth() {
-      const { apiToken, apiUsername } = tracerGetSettings();
-      if (!apiToken) { setScreen('login'); return; }
-      setUsername(apiUsername || '');
-      try {
-        const res = await fetch('/api/location/latest', {
-          headers: { Authorization: `Bearer ${apiToken}` },
-        });
-        if (res.status === 401) {
-          localStorage.removeItem('tracer_token');
-          setScreen('login');
-        } else {
-          setScreen('app');
-        }
-      } catch {
-        setScreen('app');
-      }
-    }
-    checkAuth();
-  }, []);
+  // El auth check lo maneja LoginScreen directamente
 
   // ── Start data fetching after login ───────────────────────────────────
   React.useEffect(() => {
@@ -497,14 +476,6 @@ function App() {
   }, [modalDevice, sendCmd, fireToast, fetchCmdLog]);
 
   // ── Render ────────────────────────────────────────────────────────────
-  if (screen === 'loading') {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: 'var(--text-muted)', fontSize: 13 }}>
-        Cargando…
-      </div>
-    );
-  }
-
   if (screen === 'login') {
     return (
       <>

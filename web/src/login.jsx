@@ -3,13 +3,33 @@
 function LoginScreen({ onLogin }) {
   const [username, setUsername] = React.useState('');
   const [password, setPassword] = React.useState('');
-  const [stage, setStage] = React.useState('idle'); // idle | verifying | granted | error
+  const [stage, setStage] = React.useState('idle'); // idle | checking | verifying | granted | error
   const [error, setError] = React.useState('');
   const [showHint, setShowHint] = React.useState(false);
 
+  // Auto-login si hay token válido guardado
   React.useEffect(() => {
-    const t = setTimeout(() => setShowHint(true), 1200);
-    return () => clearTimeout(t);
+    const { apiToken, apiUsername } = tracerGetSettings();
+    if (!apiToken) {
+      const t = setTimeout(() => setShowHint(true), 1200);
+      return () => clearTimeout(t);
+    }
+    setStage('checking');
+    fetch('/api/location/latest', {
+      headers: { Authorization: 'Bearer ' + apiToken },
+    }).then(res => {
+      if (res.status === 401) {
+        localStorage.removeItem('tracer_token');
+        setStage('idle');
+        setTimeout(() => setShowHint(true), 1200);
+      } else {
+        setStage('granted');
+        setTimeout(onLogin, 400);
+      }
+    }).catch(() => {
+      setStage('granted');
+      setTimeout(onLogin, 400);
+    });
   }, []);
 
   const clearError = () => {
@@ -18,7 +38,7 @@ function LoginScreen({ onLogin }) {
 
   const submit = async (e) => {
     e.preventDefault();
-    if (stage === 'verifying' || stage === 'granted') return;
+    if (isBusy) return;
     if (!username || !password) {
       setError('Completa todos los campos.');
       setStage('error');
@@ -49,6 +69,7 @@ function LoginScreen({ onLogin }) {
   };
 
   const isIdle = stage === 'idle' || stage === 'error';
+  const isBusy = stage === 'checking' || stage === 'verifying' || stage === 'granted';
 
   return (
     <div className="login-shell">
@@ -86,7 +107,7 @@ function LoginScreen({ onLogin }) {
               type="text"
               value={username}
               onChange={(e) => { setUsername(e.target.value); clearError(); }}
-              disabled={!isIdle}
+              disabled={isBusy}
               autoComplete="username"
               autoFocus
             />
@@ -97,7 +118,7 @@ function LoginScreen({ onLogin }) {
               type="password"
               value={password}
               onChange={(e) => { setPassword(e.target.value); clearError(); }}
-              disabled={!isIdle}
+              disabled={isBusy}
               autoComplete="current-password"
             />
           </label>
@@ -106,15 +127,16 @@ function LoginScreen({ onLogin }) {
 
           <button
             type="submit"
-            className={`login-submit stage-${stage === 'error' ? 'idle' : stage}`}
-            disabled={!isIdle}
+            className={`login-submit stage-${stage === 'error' ? 'idle' : (stage === 'checking' ? 'verifying' : stage)}`}
+            disabled={isBusy}
           >
             <span className="login-submit-label">
               {isIdle && 'Continuar'}
+              {stage === 'checking' && 'Conectando…'}
               {stage === 'verifying' && 'Verificando…'}
               {stage === 'granted' && (<><IconCheck width={14} height={14} /> Acceso concedido</>)}
             </span>
-            {stage === 'verifying' && <span className="login-spinner" aria-hidden="true" />}
+            {(stage === 'verifying' || stage === 'checking') && <span className="login-spinner" aria-hidden="true" />}
           </button>
         </form>
 
