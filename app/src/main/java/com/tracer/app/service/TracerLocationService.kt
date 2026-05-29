@@ -5,6 +5,10 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.content.IntentFilter
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.os.BatteryManager
 import android.os.Build
 import android.os.IBinder
@@ -31,11 +35,13 @@ import com.tracer.app.sms.CommandHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -72,6 +78,10 @@ class TracerLocationService : Service() {
         const val KEY_LAST_RESULT = "last_result"
         const val KEY_LAST_POLL   = "last_poll"
         const val KEY_LAST_CMD    = "last_cmd"
+
+        // Cola de resultados pendientes de subir (3B)
+        private const val PREFS_QUEUE         = "tracer_queue"
+        private const val KEY_PENDING_RESULTS = "pending_results"
     }
 
     private val serviceJob   = SupervisorJob()
@@ -84,6 +94,11 @@ class TracerLocationService : Service() {
     private var subscriptionMgr: SubscriptionManager? = null
 
     private var isAlertMode = false
+
+    // 3A: canal para despertar el poller cuando vuelve la red
+    private val wakeChannel = Channel<Unit>(Channel.CONFLATED)
+    // 3A: referencia al NetworkCallback para poder desregistrarlo
+    private var networkCallback: ConnectivityManager.NetworkCallback? = null
 
     // ── Señal de red ──────────────────────────────────────────────────────────
 
@@ -136,6 +151,7 @@ class TracerLocationService : Service() {
         requestLocationUpdates(isAlertMode)
         setupSignalMonitoring()
         setupSimMonitoring()
+        setupNetworkCallback()
         startCommandPoller()
     }
 
@@ -191,6 +207,9 @@ class TracerLocationService : Service() {
         super.onDestroy()
         fusedLocationClient.removeLocationUpdates(locationCallback)
         subscriptionMgr?.removeOnSubscriptionsChangedListener(simChangeListener)
+        networkCallback?.let {
+            getSystemService(ConnectivityManager::class.java)?.unregisterNetworkCallback(it)
+        }
         serviceJob.cancel()
     }
 
@@ -312,68 +331,127 @@ class TracerLocationService : Service() {
         }
     }
 
-    // ── Command poller ────────────────────────────────────────────────────────
+    // ── NetworkCallback (3A) ──────────────────────────────────────────────────
+
+    private fun setupNetworkCallback() {
+        val cm = getSystemService(ConnectivityManager::class.java) ?: return
+        val request = NetworkRequest.Builder()
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .build()
+        networkCallback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                Log.d(TAG, "Red disponible — activando poll inmediato")
+                wakeChannel.trySend(Unit)
+            }
+        }
+        cm.registerNetworkCallback(request, networkCallback!!)
+    }
+
+    // ── Cola de resultados offline (3B) ───────────────────────────────────────
+
+    private fun enqueueResult(cmdId: Long, result: String) {
+        val prefs = getSharedPreferences(PREFS_QUEUE, MODE_PRIVATE)
+        val existing = prefs.getString(KEY_PENDING_RESULTS, "") ?: ""
+        val entry = "$cmdId||${result.replace("\n", " ")}"
+        val updated = if (existing.isEmpty()) entry else "$existing\n$entry"
+        prefs.edit().putString(KEY_PENDING_RESULTS, updated).apply()
+        Log.d(TAG, "Resultado encolado offline: cmdId=$cmdId")
+    }
+
+    private suspend fun flushResultQueue() {
+        val prefs = getSharedPreferences(PREFS_QUEUE, MODE_PRIVATE)
+        val pending = prefs.getString(KEY_PENDING_RESULTS, "") ?: ""
+        if (pending.isEmpty()) return
+
+        val lines = pending.lines().filter { it.isNotEmpty() }
+        val failed = mutableListOf<String>()
+
+        for (line in lines) {
+            val idx = line.indexOf("||")
+            if (idx < 0) continue
+            val cmdId = line.substring(0, idx).toLongOrNull() ?: continue
+            val result = line.substring(idx + 2)
+            runCatching {
+                apiService.postCommandResult(
+                    TracerApiService.AUTH_TOKEN, cmdId, CommandResultPayload(result)
+                )
+                Log.d(TAG, "Resultado pendiente subido: cmdId=$cmdId")
+            }.onFailure { failed.add(line) }
+        }
+
+        prefs.edit().putString(KEY_PENDING_RESULTS, failed.joinToString("\n")).apply()
+    }
+
+    // Intenta subir el resultado; si falla por red, lo encola para el próximo ciclo
+    private fun postResultSafe(cmdId: Long, result: String) {
+        serviceScope.launch {
+            runCatching {
+                apiService.postCommandResult(
+                    TracerApiService.AUTH_TOKEN, cmdId, CommandResultPayload(result)
+                )
+            }.onFailure {
+                Log.w(TAG, "Resultado no subido, encolando: ${it.message}")
+                enqueueResult(cmdId, result)
+            }
+        }
+    }
+
+    // ── Command poller (3A + 3B) ──────────────────────────────────────────────
 
     private fun startCommandPoller() {
         serviceScope.launch {
             while (isActive) {
-                runCatching {
-                    val response = apiService.getPendingCommands(TracerApiService.AUTH_TOKEN)
-                    if (response.isSuccessful) {
-                        getSharedPreferences(PREFS_STATUS, MODE_PRIVATE).edit()
-                            .putLong(KEY_LAST_POLL, System.currentTimeMillis())
-                            .apply()
-
-                        response.body()?.forEach { cmd ->
-                            Log.d(TAG, "Remote command: ${cmd.command} args:${cmd.args}")
-                            getSharedPreferences(PREFS_STATUS, MODE_PRIVATE).edit()
-                                .putString(KEY_LAST_CMD, cmd.command)
-                                .apply()
-
-                            when (cmd.command.uppercase()) {
-                                "LOCATE" -> {
-                                    // forceLocateAndPost envía la telemetría; reportamos resultado por separado
-                                    forceLocateAndPost()
-                                    runCatching {
-                                        apiService.postCommandResult(
-                                            TracerApiService.AUTH_TOKEN, cmd.id,
-                                            CommandResultPayload("Tracer LOCATE: ubicacion enviada")
-                                        )
-                                    }
-                                }
-                                "PHOTO" -> {
-                                    // La foto maneja su propio resultado con cmdId
-                                    val intent = Intent(this@TracerLocationService, TracerLocationService::class.java).apply {
-                                        action = ACTION_TAKE_PHOTO
-                                        putExtra(EXTRA_REPLY_TO, "remote")
-                                        putExtra(EXTRA_CMD_ID, cmd.id)
-                                    }
-                                    startService(intent)
-                                }
-                                else -> {
-                                    // Comandos síncronos: CommandHandler llama onRemoteResult con el texto
-                                    val fullMessage = "${tracerPin()} ${cmd.command} ${cmd.args}".trim()
-                                    CommandHandler(
-                                        context = this@TracerLocationService,
-                                        onRemoteResult = { result ->
-                                            serviceScope.launch {
-                                                runCatching {
-                                                    apiService.postCommandResult(
-                                                        TracerApiService.AUTH_TOKEN, cmd.id,
-                                                        CommandResultPayload(result)
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    ).handle("remote", fullMessage)
-                                }
-                            }
-                        }
-                    }
-                }.onFailure { Log.w(TAG, "Command poll error: ${it.message}") }
-                delay(COMMAND_POLL_INTERVAL)
+                pollCommandsOnce()
+                // Espera hasta COMMAND_POLL_INTERVAL, pero puede despertar antes
+                // si la red se restaura (wakeChannel recibe señal del NetworkCallback)
+                val woke = withTimeoutOrNull(COMMAND_POLL_INTERVAL) {
+                    wakeChannel.receive()
+                }
+                if (woke != null) Log.d(TAG, "Poll adelantado por reconexión de red")
             }
         }
+    }
+
+    private suspend fun pollCommandsOnce() {
+        flushResultQueue() // Intentar subir resultados pendientes primero
+        runCatching {
+            val response = apiService.getPendingCommands(TracerApiService.AUTH_TOKEN)
+            if (!response.isSuccessful) return@runCatching
+
+            getSharedPreferences(PREFS_STATUS, MODE_PRIVATE).edit()
+                .putLong(KEY_LAST_POLL, System.currentTimeMillis())
+                .apply()
+
+            response.body()?.forEach { cmd ->
+                Log.d(TAG, "Remote command: ${cmd.command} args:${cmd.args}")
+                getSharedPreferences(PREFS_STATUS, MODE_PRIVATE).edit()
+                    .putString(KEY_LAST_CMD, cmd.command)
+                    .apply()
+
+                when (cmd.command.uppercase()) {
+                    "LOCATE" -> {
+                        forceLocateAndPost()
+                        postResultSafe(cmd.id, "Tracer LOCATE: ubicacion enviada")
+                    }
+                    "PHOTO" -> {
+                        // La foto maneja su propio resultado con cmdId
+                        val intent = Intent(this@TracerLocationService, TracerLocationService::class.java).apply {
+                            action = ACTION_TAKE_PHOTO
+                            putExtra(EXTRA_REPLY_TO, "remote")
+                            putExtra(EXTRA_CMD_ID, cmd.id)
+                        }
+                        startService(intent)
+                    }
+                    else -> {
+                        val fullMessage = "${tracerPin()} ${cmd.command} ${cmd.args}".trim()
+                        CommandHandler(
+                            context = this@TracerLocationService,
+                            onRemoteResult = { result -> postResultSafe(cmd.id, result) }
+                        ).handle("remote", fullMessage)
+                    }
+                }
+            }
+        }.onFailure { Log.w(TAG, "Command poll error: ${it.message}") }
     }
 
     private suspend fun forceLocateAndPost() {
