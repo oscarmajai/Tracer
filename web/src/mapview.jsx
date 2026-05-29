@@ -11,7 +11,7 @@ function LiveClock() {
   return time;
 }
 
-function MapView({ devices, selectedId, setSelectedId, ringing, onAction, statusOnline, activeCommands = {} }) {
+function MapView({ devices, selectedId, setSelectedId, ringing, onAction, statusOnline, activeCommands = {}, deviceConnStatus = 'unknown', lastPollAt = null }) {
   const mapDivRef = React.useRef(null);
   const mapInstanceRef = React.useRef(null);
   const markerRef = React.useRef(null);
@@ -112,13 +112,9 @@ function MapView({ devices, selectedId, setSelectedId, ringing, onAction, status
       <div className="map-canvas">
         <div ref={mapDivRef} className="map-inner" />
 
-        {/* Top overlay: live indicator */}
+        {/* Top overlay: indicador de conectividad del dispositivo */}
         <div className="map-overlay-top">
-          <div className="live-pill">
-            <span className={`live-dot ${statusOnline === false ? 'live-dot-off' : ''}`} />
-            <span>{statusOnline === false ? 'Desconectado' : statusOnline === true ? 'En vivo' : 'Conectando…'}</span>
-            {statusOnline === true && <span className="mono live-time"><LiveClock /></span>}
-          </div>
+          <ConnPill status={deviceConnStatus} lastPollAt={lastPollAt} />
         </div>
 
         {/* Bottom overlay: coordinates */}
@@ -160,6 +156,8 @@ function MapView({ devices, selectedId, setSelectedId, ringing, onAction, status
           ringing={ringing === device.id}
           onAction={onAction}
           activeCommands={activeCommands}
+          deviceConnStatus={deviceConnStatus}
+          lastPollAt={lastPollAt}
         />
       ) : (
         <div className="device-panel" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
@@ -170,7 +168,7 @@ function MapView({ devices, selectedId, setSelectedId, ringing, onAction, status
   );
 }
 
-function DeviceDetailPanel({ device, ringing, onAction, activeCommands = {} }) {
+function DeviceDetailPanel({ device, ringing, onAction, activeCommands = {}, deviceConnStatus = 'unknown', lastPollAt = null }) {
   const Icon = window.tracerDeviceIcon(device.type);
   const [tab, setTab] = React.useState('commands');
 
@@ -333,9 +331,139 @@ function DeviceDetailPanel({ device, ringing, onAction, activeCommands = {} }) {
               </button>
             </div>
           </div>
+
+          {deviceConnStatus === 'offline' && (
+            <SmsFallbackPanel lastPollAt={lastPollAt} />
+          )}
         </>
       )}
     </aside>
+  );
+}
+
+// ── ConnPill: indicador de conectividad del dispositivo ───────────────────────
+
+function ConnPill({ status, lastPollAt }) {
+  const [, tick] = React.useReducer(n => n + 1, 0);
+  React.useEffect(() => {
+    const i = setInterval(() => tick(), 10_000);
+    return () => clearInterval(i);
+  }, []);
+
+  const secAgo = lastPollAt ? Math.round((Date.now() - new Date(lastPollAt)) / 1000) : null;
+
+  const label = {
+    online:  'En vivo',
+    idle:    'Conectado',
+    offline: 'Sin datos',
+    unknown: 'Esperando…',
+  }[status] || 'Esperando…';
+
+  const dotClass = {
+    online:  'live-dot',
+    idle:    'live-dot live-dot-idle',
+    offline: 'live-dot live-dot-off',
+    unknown: 'live-dot live-dot-off',
+  }[status] || 'live-dot live-dot-off';
+
+  const timeLabel = secAgo !== null ? (
+    secAgo < 60  ? `${secAgo}s` :
+    secAgo < 3600 ? `${Math.floor(secAgo / 60)}m` :
+    `${Math.floor(secAgo / 3600)}h`
+  ) : null;
+
+  return (
+    <div className="live-pill">
+      <span className={dotClass} />
+      <span>{label}</span>
+      {timeLabel && status !== 'unknown' && (
+        <span className="mono live-time">{timeLabel}</span>
+      )}
+      {status === 'online' && <span className="mono live-time"><LiveClock /></span>}
+    </div>
+  );
+}
+
+// ── SmsFallbackPanel: fallback SMS cuando el dispositivo está offline ─────────
+
+function SmsFallbackPanel({ lastPollAt }) {
+  const [open, setOpen] = React.useState(false);
+  const [phone, setPhone] = React.useState(() => localStorage.getItem('tracer_device_phone') || '');
+  const [pin, setPin] = React.useState(() => localStorage.getItem('tracer_command_pin') || '1234');
+  const [copied, setCopied] = React.useState('');
+
+  const savePhone = (v) => { setPhone(v); localStorage.setItem('tracer_device_phone', v); };
+  const savePin = (v) => { setPin(v); localStorage.setItem('tracer_command_pin', v); };
+
+  const copy = (cmd) => {
+    const text = `${pin} ${cmd}`;
+    navigator.clipboard?.writeText(text).then(() => {
+      setCopied(cmd);
+      setTimeout(() => setCopied(''), 2000);
+    });
+  };
+
+  const smsHref = (cmd) => {
+    const body = encodeURIComponent(`${pin} ${cmd}`);
+    return phone ? `sms:${phone}?body=${body}` : null;
+  };
+
+  const quickCmds = ['RING', 'LOCATE', 'LOCK Dispositivo perdido', 'STATUS', 'ALERT_ON'];
+
+  const secAgo = lastPollAt ? Math.round((Date.now() - new Date(lastPollAt)) / 1000) : null;
+  const lastContactLabel = secAgo === null ? '—' :
+    secAgo < 3600 ? `hace ${Math.floor(secAgo / 60)} min` :
+    `hace ${Math.floor(secAgo / 3600)} h`;
+
+  return (
+    <div className="sms-fallback">
+      <button className="sms-fallback-header" onClick={() => setOpen(o => !o)}>
+        <span className="sms-fallback-dot" />
+        <span>Sin internet · {lastContactLabel}</span>
+        <span className="sms-fallback-caret">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="sms-fallback-body">
+          <p className="sms-fallback-hint">
+            Envía comandos por SMS desde tu teléfono al dispositivo.
+          </p>
+
+          <div className="sms-fallback-fields">
+            <label className="sms-field">
+              <span>Número del dispositivo</span>
+              <input type="tel" value={phone} onChange={e => savePhone(e.target.value)} placeholder="+521234567890" />
+            </label>
+            <label className="sms-field">
+              <span>PIN de comandos</span>
+              <input type="text" value={pin} onChange={e => savePin(e.target.value)} placeholder="1234" maxLength={8} />
+            </label>
+          </div>
+
+          <div className="sms-cmd-list">
+            {quickCmds.map(cmd => {
+              const href = smsHref(cmd);
+              return (
+                <div key={cmd} className="sms-cmd-row">
+                  <span className="sms-cmd-text mono">{pin} {cmd}</span>
+                  <div className="sms-cmd-actions">
+                    <button
+                      className={`btn btn-sm btn-ghost ${copied === cmd ? 'sms-copied' : ''}`}
+                      onClick={() => copy(cmd)}
+                    >
+                      {copied === cmd ? '✓ Copiado' : 'Copiar'}
+                    </button>
+                    {href && (
+                      <a href={href} className="btn btn-sm btn-primary">SMS</a>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

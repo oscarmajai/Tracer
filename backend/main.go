@@ -128,6 +128,29 @@ type LocationRecord struct {
 	SignalLevel  *int    `json:"signal_level,omitempty"`
 	DeviceName   string  `json:"device_name,omitempty"`
 	IsCharging   bool    `json:"is_charging"`
+	LastPollAt   string  `json:"last_poll_at,omitempty"`
+}
+
+// Última vez que el dispositivo hizo poll de comandos (cualquier request autenticado)
+var (
+	lastPollMu sync.Mutex
+	lastPollAt time.Time
+)
+
+func recordDevicePoll() {
+	lastPollMu.Lock()
+	lastPollAt = time.Now().UTC()
+	lastPollMu.Unlock()
+}
+
+func getLastPollAt() string {
+	lastPollMu.Lock()
+	t := lastPollAt
+	lastPollMu.Unlock()
+	if t.IsZero() {
+		return ""
+	}
+	return t.Format(time.RFC3339)
 }
 
 type CommandPayload struct {
@@ -304,6 +327,7 @@ func postLocation(c *fiber.Ctx) error {
 	if payload.Timestamp == "" {
 		payload.Timestamp = time.Now().UTC().Format(time.RFC3339)
 	}
+	recordDevicePoll()
 	writeCh <- payload
 	return c.SendStatus(fiber.StatusOK)
 }
@@ -345,6 +369,7 @@ func getLatestLocation(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "database error"})
 	}
+	r.LastPollAt = getLastPollAt()
 	return c.JSON(r)
 }
 
@@ -399,6 +424,7 @@ func postCommand(c *fiber.Ctx) error {
 }
 
 func getPendingCommands(c *fiber.Ctx) error {
+	recordDevicePoll()
 	rows, err := db.Query(`
 		SELECT id, command, args, status, created_at
 		FROM commands WHERE status = 'pending' ORDER BY id ASC

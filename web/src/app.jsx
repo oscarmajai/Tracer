@@ -116,6 +116,16 @@ function App() {
   const selectedId = device ? device.id : null;
   const unread = notifications.filter(n => n.unread).length;
 
+  // Estado de conectividad del dispositivo basado en last_poll_at
+  const deviceConnStatus = React.useMemo(() => {
+    const pollAt = device?.lastPollAt;
+    if (!pollAt) return 'unknown';
+    const secAgo = (Date.now() - new Date(pollAt)) / 1000;
+    if (secAgo < 35) return 'online';
+    if (secAgo < 300) return 'idle';
+    return 'offline';
+  }, [device?.lastPollAt]);
+
   // ── Status ──────────────────────────────────────────────────────────────
   const setStatus = React.useCallback((online) => {
     if (online) {
@@ -177,6 +187,7 @@ function App() {
         lat,
         lon,
         accuracy: latest.accuracy || 10,
+        lastPollAt: latest.last_poll_at || null,
         isCurrent: true,
       };
     });
@@ -603,6 +614,8 @@ function App() {
             onAction={onAction}
             statusOnline={statusOnline}
             activeCommands={activeCommands}
+            deviceConnStatus={deviceConnStatus}
+            lastPollAt={device?.lastPollAt || null}
           />
         )}
         {view === 'devices' && (

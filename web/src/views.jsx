@@ -297,6 +297,15 @@ function SettingsView({ username }) {
   const [notifs, setNotifs] = React.useState(
     typeof Notification !== 'undefined' && Notification.permission === 'granted'
   );
+  const [devicePhone, setDevicePhone] = React.useState(
+    () => localStorage.getItem('tracer_device_phone') || ''
+  );
+  const [commandPin, setCommandPin] = React.useState(
+    () => localStorage.getItem('tracer_command_pin') || '1234'
+  );
+
+  const savePhone = (v) => { setDevicePhone(v); localStorage.setItem('tracer_device_phone', v); };
+  const savePin   = (v) => { setCommandPin(v);  localStorage.setItem('tracer_command_pin', v); };
 
   const requestNotifs = async () => {
     if (!('Notification' in window)) return;
@@ -306,11 +315,30 @@ function SettingsView({ username }) {
 
   return (
     <div className="view-pad">
-      <TracerTopBar title="Configuración" subtitle="Cuenta y notificaciones" />
+      <TracerTopBar title="Configuración" subtitle="Cuenta, fallback SMS y notificaciones" />
 
       <div className="settings-list">
         <SettingsSection title="Cuenta">
           <SettingsRow label="Usuario" value={username || '—'} />
+        </SettingsSection>
+
+        <SettingsSection title="Fallback SMS">
+          <SettingsInputRow
+            label="Número del dispositivo"
+            help="Número de la SIM del dispositivo rastreado. Se usa para generar SMS de comandos cuando no hay internet."
+            value={devicePhone}
+            onChange={savePhone}
+            placeholder="+521234567890"
+            type="tel"
+          />
+          <SettingsInputRow
+            label="PIN de comandos SMS"
+            help="El PIN configurado en la app Android para autenticar comandos por SMS."
+            value={commandPin}
+            onChange={savePin}
+            placeholder="1234"
+            type="text"
+          />
         </SettingsSection>
 
         <SettingsSection title="Notificaciones">
@@ -342,6 +370,29 @@ function SettingsRow({ label, value, rightLink }) {
         <div className="settings-row-value">{value}</div>
       </div>
       {rightLink && <a href="#" className="settings-row-link" onClick={(e) => e.preventDefault()}>{rightLink}</a>}
+    </div>
+  );
+}
+
+function SettingsInputRow({ label, help, value, onChange, placeholder, type = 'text' }) {
+  return (
+    <div className="settings-row">
+      <div className="settings-row-main">
+        <div className="settings-row-label">{label}</div>
+        <div className="settings-row-help">{help}</div>
+      </div>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        style={{
+          height: 30, padding: '0 8px', fontSize: 12.5,
+          border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
+          background: 'var(--surface)', color: 'var(--text)', outline: 'none',
+          width: 160, flexShrink: 0,
+        }}
+      />
     </div>
   );
 }
