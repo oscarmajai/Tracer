@@ -268,7 +268,46 @@ function Toast({ toast, onDismiss }) {
   );
 }
 
+function CallbackModal({ open, device, onClose, onConfirm }) {
+  const [phone, setPhone] = React.useState('');
+  React.useEffect(() => { if (open) setPhone(''); }, [open]);
+  if (!device) return null;
+  return (
+    <Modal open={open} onClose={onClose}>
+      <header className="modal-head">
+        <div className="modal-eyebrow">Vigilancia · Llamada de retorno</div>
+        <h3>Llamar desde {device.name}</h3>
+        <button className="modal-close" onClick={onClose}><IconClose width={14} height={14} /></button>
+      </header>
+      <div className="modal-body">
+        <p className="modal-lead">
+          El dispositivo iniciará una llamada al número indicado.
+          Sin registro en el historial del dispositivo.
+        </p>
+        <label className="form-field">
+          <span>Número de teléfono</span>
+          <input
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="+521234567890"
+            autoFocus
+          />
+          <small>Deja vacío para usar el número de confianza configurado en el dispositivo.</small>
+        </label>
+      </div>
+      <footer className="modal-foot">
+        <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+        <button className="btn btn-primary" onClick={() => onConfirm(phone.trim())}>
+          <IconRing width={14} height={14} /> Iniciar llamada
+        </button>
+      </footer>
+    </Modal>
+  );
+}
+
 window.RingModal = RingModal;
 window.LostModal = LostModal;
 window.WipeModal = WipeModal;
+window.CallbackModal = CallbackModal;
 window.Toast = Toast;

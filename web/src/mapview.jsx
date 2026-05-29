@@ -11,7 +11,7 @@ function LiveClock() {
   return time;
 }
 
-function MapView({ devices, selectedId, setSelectedId, ringing, onAction, statusOnline }) {
+function MapView({ devices, selectedId, setSelectedId, ringing, onAction, statusOnline, activeCommands = {} }) {
   const mapDivRef = React.useRef(null);
   const mapInstanceRef = React.useRef(null);
   const markerRef = React.useRef(null);
@@ -159,6 +159,7 @@ function MapView({ devices, selectedId, setSelectedId, ringing, onAction, status
           device={device}
           ringing={ringing === device.id}
           onAction={onAction}
+          activeCommands={activeCommands}
         />
       ) : (
         <div className="device-panel" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
@@ -169,7 +170,7 @@ function MapView({ devices, selectedId, setSelectedId, ringing, onAction, status
   );
 }
 
-function DeviceDetailPanel({ device, ringing, onAction }) {
+function DeviceDetailPanel({ device, ringing, onAction, activeCommands = {} }) {
   const Icon = window.tracerDeviceIcon(device.type);
   const [tab, setTab] = React.useState('commands');
 
@@ -178,32 +179,36 @@ function DeviceDetailPanel({ device, ringing, onAction }) {
       label: 'Vigilancia',
       hint: 'Captura datos del entorno sin alertar',
       items: [
-        { id: 'photo', icon: IconCamera, label: 'Foto remota' },
-        { id: 'audio', icon: IconMic, label: 'Audio ambiente' },
-        { id: 'screen', icon: IconScreen, label: 'Pantalla' },
-        { id: 'silent-call', icon: IconRing, label: 'Llamada silenciosa' },
+        { id: 'photo',        icon: IconCamera,  label: 'Foto remota' },
+        { id: 'audio',        icon: IconMic,     label: 'Audio ambiente' },
+        { id: 'screen',       icon: IconScreen,  label: 'Pantalla' },
+        { id: 'silent-call',  icon: IconRing,    label: 'Llamada silenciosa' },
+        { id: 'callback',     icon: IconPhone,   label: 'Llamada retorno' },
       ],
     },
     {
       label: 'Localización',
       hint: 'Hacer notar el dispositivo o mejorar su posición',
       items: [
-        { id: 'ring', icon: IconRing, label: 'Sonar', active: ringing },
-        { id: 'flash', icon: IconFlash, label: 'Linterna' },
-        { id: 'vibrate', icon: IconVibrate, label: 'Vibrar' },
-        { id: 'gps', icon: IconBoltGPS, label: 'GPS preciso' },
+        { id: 'ring',     icon: IconRing,     label: 'Sonar',       active: ringing },
+        { id: 'flash',    icon: IconFlash,    label: 'Linterna',    active: activeCommands.flash },
+        { id: 'vibrate',  icon: IconVibrate,  label: 'Vibrar',      active: activeCommands.vibrate },
+        { id: 'gps',      icon: IconBoltGPS, label: 'GPS preciso' },
+        { id: 'locate',   icon: IconTarget,   label: 'Ubicar ahora' },
+        { id: 'message',  icon: IconMessage,  label: 'Mensaje' },
         { id: 'geofence', icon: IconGeofence, label: 'Geocerca' },
-        { id: 'message', icon: IconMessage, label: 'Mensaje' },
       ],
     },
     {
       label: 'Seguridad',
       hint: 'Bloquear, ocultar y proteger remotamente',
       items: [
-        { id: 'lost', icon: IconLock, label: 'Modo perdido' },
-        { id: 'stealth', icon: IconStealth, label: 'Modo sigilo' },
-        { id: 'apps', icon: IconAppBlock, label: 'Bloquear apps' },
-        { id: 'key', icon: IconKey, label: 'Nueva contraseña' },
+        { id: 'lost',     icon: IconLock,     label: 'Modo perdido' },
+        { id: 'alert',    icon: IconBell,     label: 'Modo alerta',     active: activeCommands.alert },
+        { id: 'keyguard', icon: IconShield,   label: 'Teclado seguro',  active: activeCommands.keyguard },
+        { id: 'stealth',  icon: IconStealth,  label: 'Modo sigilo' },
+        { id: 'apps',     icon: IconAppBlock, label: 'Bloquear apps' },
+        { id: 'key',      icon: IconKey,      label: 'Nueva contraseña' },
       ],
     },
   ];

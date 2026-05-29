@@ -8,38 +8,47 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 
 // Mapeo de comandos de la UI a comandos del backend
 const KIND_TO_CMD = {
-  ring: 'RING',
-  lost: 'LOCK',
-  wipe: 'WIPE',
-  photo: 'PHOTO',
-  audio: 'AUDIO',
-  screen: 'SCREENSHOT',
+  ring:          'RING',
+  lost:          'LOCK',
+  wipe:          'WIPE',
+  photo:         'PHOTO',
+  audio:         'AUDIO',
+  screen:        'SCREENSHOT',
   'silent-call': 'SILENT_CALL',
-  flash: 'FLASH',
-  vibrate: 'VIBRATE',
-  gps: 'GPS_HIGH',
-  message: 'MESSAGE',
-  stealth: 'STEALTH',
-  apps: 'BLOCK_APPS',
-  key: 'RESET_PIN',
+  flash:         'FLASH',
+  vibrate:       'VIBRATE',
+  gps:           'GPS_HIGH',
+  locate:        'LOCATE',
+  message:       'MESSAGE',
+  callback:      'CALLBACK',
+  stealth:       'STEALTH',
+  apps:          'BLOCK_APPS',
+  key:           'RESET_PIN',
+  // alert y keyguard se envían directamente desde onAction (son toggles)
 };
 
 const COMMAND_TOASTS = {
-  ring: { tone: 'default', title: (d) => `Sonando ${d.name}`, detail: 'Se detendrá automáticamente.' },
-  lost: { tone: 'warn', title: () => 'Modo perdido activado', detail: 'El dispositivo se bloqueará.' },
-  wipe: { tone: 'danger', title: () => 'Borrado remoto iniciado', detail: 'Se ejecutará al conectarse a internet.' },
-  photo: { tone: 'default', title: (d) => `Foto solicitada en ${d.name}`, detail: 'Aparecerá en el mapa.' },
-  audio: { tone: 'default', title: (d) => `Audio solicitado de ${d.name}`, detail: 'Disponible en Actividad.' },
-  screen: { tone: 'default', title: (d) => `Pantalla solicitada de ${d.name}`, detail: 'Imagen guardada.' },
-  'silent-call': { tone: 'default', title: (d) => `Llamada con ${d.name}`, detail: 'Sin registro en el dispositivo.' },
-  flash: { tone: 'default', title: (d) => `Linterna encendida en ${d.name}`, detail: 'Parpadeará durante 60 segundos.' },
-  vibrate: { tone: 'default', title: (d) => `${d.name} vibrando`, detail: 'Durante 60 segundos.' },
-  gps: { tone: 'default', title: (d) => `GPS preciso activado en ${d.name}`, detail: 'Precisión mejorada.' },
-  geofence: { tone: 'default', title: () => 'Geocerca creada', detail: 'Te avisaremos al cambio de zona.' },
-  message: { tone: 'default', title: (d) => `Mensaje enviado a ${d.name}`, detail: 'Aparecerá en pantalla completa.' },
-  stealth: { tone: 'warn', title: () => 'Modo sigilo activado', detail: 'El dispositivo no mostrará rastros.' },
-  apps: { tone: 'warn', title: () => 'Apps sensibles bloqueadas', detail: 'Banca, correo y mensajería deshabilitadas.' },
-  key: { tone: 'warn', title: (d) => `Contraseña cambiada en ${d.name}`, detail: 'Nueva clave aplicada.' },
+  ring:          { tone: 'default', title: (d) => `Sonando ${d.name}`, detail: 'Se detendrá automáticamente.' },
+  lost:          { tone: 'warn',    title: () => 'Modo perdido activado', detail: 'El dispositivo se bloqueará.' },
+  wipe:          { tone: 'danger',  title: () => 'Borrado remoto iniciado', detail: 'Se ejecutará al conectarse a internet.' },
+  photo:         { tone: 'default', title: (d) => `Foto solicitada en ${d.name}`, detail: 'Aparecerá en Actividad.' },
+  audio:         { tone: 'default', title: (d) => `Audio solicitado de ${d.name}`, detail: 'Disponible en Actividad.' },
+  screen:        { tone: 'default', title: (d) => `Pantalla solicitada de ${d.name}`, detail: 'Imagen guardada.' },
+  'silent-call': { tone: 'default', title: (d) => `Llamada silenciosa desde ${d.name}`, detail: 'Sin registro en el dispositivo.' },
+  flash:         { tone: 'default', title: (d) => `Linterna encendida en ${d.name}`, detail: '60 segundos · toca de nuevo para apagar.' },
+  vibrate:       { tone: 'default', title: (d) => `${d.name} vibrando`, detail: '60 segundos · toca de nuevo para detener.' },
+  gps:           { tone: 'default', title: (d) => `GPS preciso activado en ${d.name}`, detail: 'Polling cada 10s.' },
+  locate:        { tone: 'default', title: (d) => `Ubicación forzada en ${d.name}`, detail: 'El mapa se actualizará.' },
+  geofence:      { tone: 'default', title: () => 'Geocerca creada', detail: 'Te avisaremos al cambio de zona.' },
+  message:       { tone: 'default', title: (d) => `Mensaje enviado a ${d.name}`, detail: 'Aparecerá en pantalla completa.' },
+  callback:      { tone: 'default', title: (d) => `Llamada iniciada desde ${d.name}`, detail: 'Sin registro en el dispositivo.' },
+  stealth:       { tone: 'warn',    title: () => 'Modo sigilo activado', detail: 'El dispositivo no mostrará rastros.' },
+  apps:          { tone: 'warn',    title: () => 'Apps sensibles bloqueadas', detail: 'Banca, correo y mensajería deshabilitadas.' },
+  key:           { tone: 'warn',    title: (d) => `Contraseña cambiada en ${d.name}`, detail: 'Nueva clave aplicada.' },
+  alert_on:      { tone: 'warn',    title: () => 'Modo alerta activado', detail: 'Polling cada 10 segundos.' },
+  alert_off:     { tone: 'default', title: () => 'Modo alerta desactivado', detail: 'Polling normal restaurado.' },
+  keyguard_on:   { tone: 'warn',    title: () => 'Teclado seguro activado', detail: 'Cámara y notificaciones ocultadas en bloqueo.' },
+  keyguard_off:  { tone: 'default', title: () => 'Teclado seguro desactivado', detail: 'Funciones de bloqueo restauradas.' },
 };
 
 function App() {
@@ -68,6 +77,12 @@ function App() {
   const [ringingId, setRingingId] = React.useState(null);
   const [toast, setToast] = React.useState(null);
 
+  // Estados de comandos toggle (flash, vibrate, alert, keyguard)
+  const [flashActive, setFlashActive] = React.useState(false);
+  const [vibrateActive, setVibrateActive] = React.useState(false);
+  const [alertActive, setAlertActive] = React.useState(false);
+  const [keyguardActive, setKeyguardActive] = React.useState(false);
+
   // Refs for stable closures
   const cmdLogRef = React.useRef([]);
   const deviceRef = React.useRef(null);
@@ -75,9 +90,18 @@ function App() {
   const prevStatusRef = React.useRef(null);
   const alertTimerRef = React.useRef(null);
   const handleWsMessageRef = React.useRef(null);
+  // Refs de toggles para onAction sin dependencias de estado
+  const flashActiveRef = React.useRef(false);
+  const vibrateActiveRef = React.useRef(false);
+  const alertActiveRef = React.useRef(false);
+  const keyguardActiveRef = React.useRef(false);
 
   React.useEffect(() => { cmdLogRef.current = cmdLog; }, [cmdLog]);
   React.useEffect(() => { deviceRef.current = device; }, [device]);
+  React.useEffect(() => { flashActiveRef.current = flashActive; }, [flashActive]);
+  React.useEffect(() => { vibrateActiveRef.current = vibrateActive; }, [vibrateActive]);
+  React.useEffect(() => { alertActiveRef.current = alertActive; }, [alertActive]);
+  React.useEffect(() => { keyguardActiveRef.current = keyguardActive; }, [keyguardActive]);
 
   // Theme
   React.useEffect(() => {
@@ -88,6 +112,7 @@ function App() {
 
   // Derived
   const devices = device ? [device] : [];
+  const activeCommands = { flash: flashActive, vibrate: vibrateActive, alert: alertActive, keyguard: keyguardActive };
   const selectedId = device ? device.id : null;
   const unread = notifications.filter(n => n.unread).length;
 
@@ -415,8 +440,61 @@ function App() {
   const modalDevice = modal ? (devices.find(d => d.id === modal.deviceId) || devices[0] || null) : null;
 
   const onAction = React.useCallback((kind, deviceId) => {
+    const dev = deviceRef.current;
+
+    switch (kind) {
+      case 'locate':
+        sendCmd('LOCATE').then(() => fetchCmdLog()).catch(() => {});
+        if (dev) fireToast('locate', dev);
+        return;
+
+      case 'alert': {
+        const next = !alertActiveRef.current;
+        setAlertActive(next);
+        alertActiveRef.current = next;
+        sendCmd(next ? 'ALERT_ON' : 'ALERT_OFF').then(() => fetchCmdLog()).catch(() => {
+          setAlertActive(!next);
+          alertActiveRef.current = !next;
+        });
+        if (dev) fireToast(next ? 'alert_on' : 'alert_off', dev);
+        return;
+      }
+
+      case 'keyguard': {
+        const next = !keyguardActiveRef.current;
+        setKeyguardActive(next);
+        keyguardActiveRef.current = next;
+        sendCmd(next ? 'KEYGUARD_ON' : 'KEYGUARD_OFF').then(() => fetchCmdLog()).catch(() => {
+          setKeyguardActive(!next);
+          keyguardActiveRef.current = !next;
+        });
+        if (dev) fireToast(next ? 'keyguard_on' : 'keyguard_off', dev);
+        return;
+      }
+
+      case 'flash':
+        if (flashActiveRef.current) {
+          setFlashActive(false);
+          flashActiveRef.current = false;
+          sendCmd('FLASH_STOP').then(() => fetchCmdLog()).catch(() => {});
+          return;
+        }
+        break;
+
+      case 'vibrate':
+        if (vibrateActiveRef.current) {
+          setVibrateActive(false);
+          vibrateActiveRef.current = false;
+          sendCmd('VIBRATE_STOP').then(() => fetchCmdLog()).catch(() => {});
+          return;
+        }
+        break;
+
+      default:
+        break;
+    }
     setModal({ kind, deviceId });
-  }, []);
+  }, [sendCmd, fetchCmdLog, fireToast]);
 
   // ── Command confirmations ─────────────────────────────────────────────
   const confirmRing = React.useCallback(async () => {
@@ -469,10 +547,31 @@ function App() {
         await sendCmd(command, detail || '');
         fireToast(kind, dev);
         fetchCmdLog();
+        // Activar estado visual para comandos con duración y auto-reset a los 65s
+        if (kind === 'flash') {
+          setFlashActive(true);
+          flashActiveRef.current = true;
+          setTimeout(() => { setFlashActive(false); flashActiveRef.current = false; }, 65_000);
+        }
+        if (kind === 'vibrate') {
+          setVibrateActive(true);
+          vibrateActiveRef.current = true;
+          setTimeout(() => { setVibrateActive(false); vibrateActiveRef.current = false; }, 65_000);
+        }
       } catch {}
     } else {
       fireToast(kind, dev);
     }
+  }, [modalDevice, sendCmd, fireToast, fetchCmdLog]);
+
+  const confirmCallback = React.useCallback(async (phone) => {
+    const dev = modalDevice;
+    setModal(null);
+    try {
+      await sendCmd('CALLBACK', phone || '');
+      fireToast('callback', dev);
+      fetchCmdLog();
+    } catch {}
   }, [modalDevice, sendCmd, fireToast, fetchCmdLog]);
 
   // ── Render ────────────────────────────────────────────────────────────
@@ -503,6 +602,7 @@ function App() {
             ringing={ringingId}
             onAction={onAction}
             statusOnline={statusOnline}
+            activeCommands={activeCommands}
           />
         )}
         {view === 'devices' && (
@@ -536,6 +636,8 @@ function App() {
         onClose={closeModal} onConfirm={confirmLost} />
       <WipeModal open={modal?.kind === 'wipe'} device={modalDevice}
         onClose={closeModal} onConfirm={confirmWipe} />
+      <CallbackModal open={modal?.kind === 'callback'} device={modalDevice}
+        onClose={closeModal} onConfirm={confirmCallback} />
 
       <PhotoModal open={modal?.kind === 'photo'} device={modalDevice}
         onClose={closeModal} onConfirm={() => confirmGeneric('photo', '')} />
