@@ -72,6 +72,12 @@ class CommandHandler(
             "KEYGUARD_ON" -> handleKeyguard(sender, true)
             "KEYGUARD_OFF"-> handleKeyguard(sender, false)
             "GEO_BREACH"  -> handleGeoBreach(sender)
+            "FLASH"       -> handleFlash(sender, true)
+            "FLASH_STOP"  -> handleFlash(sender, false)
+            "VIBRATE"     -> handleVibrate(sender, true)
+            "VIBRATE_STOP"-> handleVibrate(sender, false)
+            "GPS_HIGH"    -> handleGpsHigh(sender)
+            "MESSAGE"     -> handleMessage(sender, args)
             else          -> if (sender != "remote") reply(sender, "Tracer: comando desconocido")
         }
     }
@@ -330,6 +336,73 @@ class CommandHandler(
         }
     }
 
+    // ── Fase 1A: comandos nuevos ──────────────────────────────────────────────
+
+    private fun handleFlash(sender: String, enable: Boolean) {
+        if (enable) {
+            val ok = FlashManager.start(context)
+            if (ok) reply(sender, "Tracer FLASH: linterna encendida 60s")
+            else    reply(sender, "Tracer FLASH: sin linterna disponible")
+        } else {
+            FlashManager.stop()
+            reply(sender, "Tracer FLASH: linterna apagada")
+        }
+    }
+
+    private fun handleVibrate(sender: String, enable: Boolean) {
+        if (enable) {
+            val ok = VibrateManager.start(context)
+            if (ok) reply(sender, "Tracer VIBRATE: vibrando 60s")
+            else    reply(sender, "Tracer VIBRATE: sin motor de vibración")
+        } else {
+            VibrateManager.stop()
+            reply(sender, "Tracer VIBRATE: vibración detenida")
+        }
+    }
+
+    private fun handleGpsHigh(sender: String) {
+        // Activa modo alerta (polling cada 10s con alta precisión) y fuerza
+        // una lectura inmediata que se sube al servidor.
+        setAlertMode(true)
+        val intent = Intent(context, TracerLocationService::class.java).apply {
+            action = TracerLocationService.ACTION_FORCE_LOCATE
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent)
+        } else {
+            context.startService(intent)
+        }
+        reply(sender, "Tracer GPS_HIGH: ubicación forzada, polling 10s activado")
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun handleMessage(sender: String, args: List<String>) {
+        val text = args.joinToString(" ").trim()
+        if (text.isEmpty()) {
+            reply(sender, "Tracer MESSAGE: falta el texto del mensaje")
+            return
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+            reply(sender, "Tracer MESSAGE: sin permiso de notificaciones")
+            return
+        }
+        val nm = context.getSystemService(NotificationManager::class.java)
+        val notification = NotificationCompat.Builder(context, TracerApp.NOTIFICATION_CHANNEL_ID)
+            .setContentTitle("Tracer")
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+            .setAutoCancel(true)
+            .build()
+        nm.notify(MESSAGE_NOTIF_ID, notification)
+        reply(sender, "Tracer MESSAGE: mensaje enviado a pantalla")
+    }
+
     private fun setAlertMode(enable: Boolean) {
         val intent = Intent(context, TracerLocationService::class.java).apply {
             action = TracerLocationService.ACTION_SET_ALERT_MODE
@@ -390,6 +463,7 @@ class CommandHandler(
         private const val TAG = "TracerCmd"
         private const val WIPE_TIMEOUT_MS = 60_000L
         private const val LOCK_MSG_NOTIF_ID = 9001
+        private const val MESSAGE_NOTIF_ID = 9002
         private var pendingWipe: PendingWipe? = null
 
         fun sendSms(context: Context, to: String, message: String) {
