@@ -52,6 +52,14 @@ interface TracerApiService {
         @Part photo: MultipartBody.Part
     ): retrofit2.Response<Unit>
 
+    @Multipart
+    @POST("api/audio")
+    suspend fun uploadAudio(
+        @Header("Authorization") token: String,
+        @Part("device_id") deviceId: RequestBody,
+        @Part audio: MultipartBody.Part
+    ): retrofit2.Response<Unit>
+
     @POST("api/alert")
     suspend fun postAlert(
         @Header("Authorization") token: String,
@@ -66,7 +74,8 @@ interface TracerApiService {
         fun create(): TracerApiService {
             val client = OkHttpClient.Builder()
                 .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-                .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(120, java.util.concurrent.TimeUnit.SECONDS)
+                .writeTimeout(120, java.util.concurrent.TimeUnit.SECONDS)
                 .build()
 
             return Retrofit.Builder()

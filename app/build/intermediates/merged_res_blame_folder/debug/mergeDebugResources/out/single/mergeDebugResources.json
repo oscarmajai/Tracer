@@ -4,16 +4,16 @@
         "source": "/home/oscarmajai/.gradle/daemon/9.0.0/com.tracer.app-main-56:/layout/activity_main.xml"
     },
     {
-        "merged": "com.tracer.app-debug-54:/xml_device_admin_policies.xml.flat",
-        "source": "com.tracer.app-main-56:/xml/device_admin_policies.xml"
-    },
-    {
         "merged": "/home/oscarmajai/.gradle/daemon/9.0.0/com.tracer.app-debug-54:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
         "source": "/home/oscarmajai/.gradle/daemon/9.0.0/com.tracer.app-main-56:/mipmap-anydpi-v26/ic_launcher_round.xml"
     },
     {
         "merged": "/home/oscarmajai/.gradle/daemon/9.0.0/com.tracer.app-debug-54:/mipmap-anydpi-v26_ic_launcher.xml.flat",
         "source": "/home/oscarmajai/.gradle/daemon/9.0.0/com.tracer.app-main-56:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
+        "merged": "com.tracer.app-debug-54:/xml_accessibility_service_config.xml.flat",
+        "source": "com.tracer.app-main-56:/xml/accessibility_service_config.xml"
     },
     {
         "merged": "/home/oscarmajai/.gradle/daemon/9.0.0/com.tracer.app-debug-54:/xml_device_admin_policies.xml.flat",

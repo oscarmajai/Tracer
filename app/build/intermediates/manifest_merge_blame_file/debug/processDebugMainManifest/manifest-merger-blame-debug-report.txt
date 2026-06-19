@@ -61,297 +61,336 @@
 32-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:26:5-84
 32-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:26:22-81
 33
-34    <!-- Llamada silenciosa de retorno -->
-35    <uses-permission android:name="android.permission.CALL_PHONE" />
-35-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:29:5-69
-35-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:29:22-66
-36
-37    <!-- Forzar encendido de conexiones / estado de red -->
-38    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-38-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:32:5-76
-38-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:32:22-73
-39    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-39-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:33:5-76
-39-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:33:22-73
-40    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
-40-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:34:5-79
-40-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:34:22-76
-41    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-41-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:35:5-79
-41-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:35:22-76
-42
-43    <!-- Notificaciones en pantalla de bloqueo (LOCK con mensaje, Android 13+) -->
-44    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-44-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:38:5-77
-44-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:38:22-74
-45
-46    <permission
-46-->[androidx.core:core:1.15.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/819f7fb6861e9e3ff826daa1491521e8/transformed/core-1.15.0/AndroidManifest.xml:22:5-24:47
-47        android:name="com.tracer.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
-47-->[androidx.core:core:1.15.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/819f7fb6861e9e3ff826daa1491521e8/transformed/core-1.15.0/AndroidManifest.xml:23:9-81
-48        android:protectionLevel="signature" />
-48-->[androidx.core:core:1.15.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/819f7fb6861e9e3ff826daa1491521e8/transformed/core-1.15.0/AndroidManifest.xml:24:9-44
+34    <!-- Grabación de audio remota -->
+35    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+35-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:29:5-71
+35-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:29:22-68
+36    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+36-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:30:5-88
+36-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:30:22-85
+37
+38    <!-- Llamada silenciosa de retorno -->
+39    <uses-permission android:name="android.permission.CALL_PHONE" />
+39-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:33:5-69
+39-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:33:22-66
+40
+41    <!-- Forzar encendido de conexiones / estado de red -->
+42    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+42-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:36:5-76
+42-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:36:22-73
+43    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+43-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:37:5-76
+43-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:37:22-73
+44    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+44-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:38:5-79
+44-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:38:22-76
+45    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+45-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:39:5-79
+45-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:39:22-76
+46
+47    <!-- Vibración remota -->
+48    <uses-permission android:name="android.permission.VIBRATE" />
+48-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:42:5-66
+48-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:42:22-63
 49
-50    <uses-permission android:name="com.tracer.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
-50-->[androidx.core:core:1.15.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/819f7fb6861e9e3ff826daa1491521e8/transformed/core-1.15.0/AndroidManifest.xml:26:5-97
-50-->[androidx.core:core:1.15.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/819f7fb6861e9e3ff826daa1491521e8/transformed/core-1.15.0/AndroidManifest.xml:26:22-94
-51
-52    <application
-52-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:40:5-118:19
-53        android:name="com.tracer.app.TracerApp"
-53-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:41:9-34
-54        android:allowBackup="false"
-54-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:42:9-36
-55        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
-55-->[androidx.core:core:1.15.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/819f7fb6861e9e3ff826daa1491521e8/transformed/core-1.15.0/AndroidManifest.xml:28:18-86
-56        android:debuggable="true"
-57        android:extractNativeLibs="false"
-58        android:icon="@mipmap/ic_launcher"
-58-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:43:9-43
-59        android:label="@string/app_name"
-59-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:44:9-41
-60        android:roundIcon="@mipmap/ic_launcher_round"
-60-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:45:9-54
-61        android:supportsRtl="true"
-61-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:46:9-35
-62        android:testOnly="true"
-63        android:theme="@android:style/Theme.Material.Light.NoActionBar" >
-63-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:47:9-72
-64
-65        <!-- La actividad real no tiene LAUNCHER; el alias lo tiene y puede desactivarse -->
-66        <activity
-66-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:50:9-52:39
-67            android:name="com.tracer.app.MainActivity"
-67-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:51:13-41
-68            android:exported="true" />
-68-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:52:13-36
-69
-70        <activity-alias
-70-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:54:9-63:26
-71            android:name="com.tracer.app.MainActivityAlias"
-71-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:55:13-46
-72            android:enabled="true"
-72-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:57:13-35
-73            android:exported="true"
-73-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:58:13-36
-74            android:targetActivity="com.tracer.app.MainActivity" >
-74-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:56:13-51
-75            <intent-filter>
-75-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:59:13-62:29
-76                <action android:name="android.intent.action.MAIN" />
-76-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:60:17-69
-76-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:60:25-66
-77
-78                <category android:name="android.intent.category.LAUNCHER" />
-78-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:61:17-77
-78-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:61:27-74
-79            </intent-filter>
-80        </activity-alias>
-81
-82        <!-- Foreground Service con tipo de ubicación declarado -->
-83        <service
-83-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:66:9-71:44
-84            android:name="com.tracer.app.service.TracerLocationService"
-84-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:67:13-58
-85            android:enabled="true"
-85-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:68:13-35
-86            android:exported="false"
-86-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:69:13-37
-87            android:foregroundServiceType="location|camera"
-87-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:70:13-60
-88            android:stopWithTask="false" />
-88-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:71:13-41
-89
-90        <!-- Receptor para reinicio automático tras arranque del dispositivo -->
-91        <receiver
-91-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:74:9-82:20
-92            android:name="com.tracer.app.BootReceiver"
-92-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:75:13-41
-93            android:enabled="true"
-93-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:76:13-35
-94            android:exported="true" >
-94-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:77:13-36
-95            <intent-filter>
-95-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:78:13-81:29
-96                <action android:name="android.intent.action.BOOT_COMPLETED" />
-96-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:79:17-79
-96-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:79:25-76
-97                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-97-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:80:17-84
-97-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:80:25-81
-98            </intent-filter>
-99        </receiver>
-100
-101        <!-- Receptor de comandos SMS -->
-102        <receiver
-102-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:85:9-92:20
-103            android:name="com.tracer.app.sms.SmsReceiver"
-103-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:86:13-44
-104            android:enabled="true"
-104-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:87:13-35
-105            android:exported="true" >
-105-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:88:13-36
-106            <intent-filter android:priority="999" >
-106-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:89:13-91:29
-106-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:89:28-50
-107                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
-107-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:90:17-82
-107-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:90:25-79
-108            </intent-filter>
-109        </receiver>
-110
-111        <!-- Código secreto *#*#7223#*#* para reabrir la configuración -->
-112        <receiver
-112-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:95:9-103:20
-113            android:name="com.tracer.app.SecretCodeReceiver"
-113-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:96:13-47
-114            android:enabled="true"
-114-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:97:13-35
-115            android:exported="true" >
-115-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:98:13-36
-116            <intent-filter>
-116-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:99:13-102:29
-117                <action android:name="android.provider.Telephony.SECRET_CODE" />
-117-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:100:17-81
-117-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:100:25-78
-118
-119                <data
-119-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:101:17-82
-120                    android:host="7223"
-120-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:101:60-79
-121                    android:scheme="android_secret_code" />
-121-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:101:23-59
-122            </intent-filter>
-123        </receiver>
-124
-125        <!-- Device Admin — necesario para el comando LOCK -->
-126        <receiver
-126-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:106:9-116:20
-127            android:name="com.tracer.app.admin.TracerDeviceAdminReceiver"
-127-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:107:13-60
-128            android:exported="true"
-128-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:108:13-36
-129            android:permission="android.permission.BIND_DEVICE_ADMIN" >
-129-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:109:13-70
-130            <meta-data
-130-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:110:13-112:65
-131                android:name="android.app.device_admin"
-131-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:111:17-56
-132                android:resource="@xml/device_admin_policies" />
-132-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:112:17-62
-133
-134            <intent-filter>
-134-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:113:13-115:29
-135                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
-135-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:114:17-82
-135-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:114:25-79
-136            </intent-filter>
-137        </receiver>
-138
-139        <service
-139-->[androidx.camera:camera-camera2:1.4.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/133f6a3e26ae7f32e8d177521d448c32/transformed/camera-camera2-1.4.1/AndroidManifest.xml:24:9-33:19
-140            android:name="androidx.camera.core.impl.MetadataHolderService"
-140-->[androidx.camera:camera-camera2:1.4.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/133f6a3e26ae7f32e8d177521d448c32/transformed/camera-camera2-1.4.1/AndroidManifest.xml:25:13-75
-141            android:enabled="false"
-141-->[androidx.camera:camera-camera2:1.4.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/133f6a3e26ae7f32e8d177521d448c32/transformed/camera-camera2-1.4.1/AndroidManifest.xml:26:13-36
-142            android:exported="false" >
-142-->[androidx.camera:camera-camera2:1.4.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/133f6a3e26ae7f32e8d177521d448c32/transformed/camera-camera2-1.4.1/AndroidManifest.xml:27:13-37
-143            <meta-data
-143-->[androidx.camera:camera-camera2:1.4.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/133f6a3e26ae7f32e8d177521d448c32/transformed/camera-camera2-1.4.1/AndroidManifest.xml:30:13-32:89
-144                android:name="androidx.camera.core.impl.MetadataHolderService.DEFAULT_CONFIG_PROVIDER"
-144-->[androidx.camera:camera-camera2:1.4.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/133f6a3e26ae7f32e8d177521d448c32/transformed/camera-camera2-1.4.1/AndroidManifest.xml:31:17-103
-145                android:value="androidx.camera.camera2.Camera2Config$DefaultProvider" />
-145-->[androidx.camera:camera-camera2:1.4.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/133f6a3e26ae7f32e8d177521d448c32/transformed/camera-camera2-1.4.1/AndroidManifest.xml:32:17-86
-146        </service>
-147
-148        <activity
-148-->[com.google.android.gms:play-services-base:18.5.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/68053197b4eec34687a4e49c7dd1d73f/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:9-173
-149            android:name="com.google.android.gms.common.api.GoogleApiActivity"
-149-->[com.google.android.gms:play-services-base:18.5.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/68053197b4eec34687a4e49c7dd1d73f/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:19-85
-150            android:exported="false"
-150-->[com.google.android.gms:play-services-base:18.5.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/68053197b4eec34687a4e49c7dd1d73f/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:146-170
-151            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-151-->[com.google.android.gms:play-services-base:18.5.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/68053197b4eec34687a4e49c7dd1d73f/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:86-145
-152
-153        <meta-data
-153-->[com.google.android.gms:play-services-basement:18.4.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/3721a52bc7fcabfcf2171f87888eeaf7/transformed/play-services-basement-18.4.0/AndroidManifest.xml:6:9-122
-154            android:name="com.google.android.gms.version"
-154-->[com.google.android.gms:play-services-basement:18.4.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/3721a52bc7fcabfcf2171f87888eeaf7/transformed/play-services-basement-18.4.0/AndroidManifest.xml:6:20-65
-155            android:value="@integer/google_play_services_version" />
-155-->[com.google.android.gms:play-services-basement:18.4.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/3721a52bc7fcabfcf2171f87888eeaf7/transformed/play-services-basement-18.4.0/AndroidManifest.xml:6:66-119
-156
-157        <activity
-157-->[androidx.compose.ui:ui-tooling-android:1.7.6] /home/oscarmajai/.gradle/caches/9.0.0/transforms/32331dff8eb502bc555f07e2453deec9/transformed/ui-tooling-release/AndroidManifest.xml:23:9-25:39
-158            android:name="androidx.compose.ui.tooling.PreviewActivity"
-158-->[androidx.compose.ui:ui-tooling-android:1.7.6] /home/oscarmajai/.gradle/caches/9.0.0/transforms/32331dff8eb502bc555f07e2453deec9/transformed/ui-tooling-release/AndroidManifest.xml:24:13-71
-159            android:exported="true" />
-159-->[androidx.compose.ui:ui-tooling-android:1.7.6] /home/oscarmajai/.gradle/caches/9.0.0/transforms/32331dff8eb502bc555f07e2453deec9/transformed/ui-tooling-release/AndroidManifest.xml:25:13-36
+50    <!-- Notificaciones en pantalla de bloqueo (LOCK con mensaje, Android 13+) -->
+51    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+51-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:45:5-77
+51-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:45:22-74
+52
+53    <permission
+53-->[androidx.core:core:1.15.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/819f7fb6861e9e3ff826daa1491521e8/transformed/core-1.15.0/AndroidManifest.xml:22:5-24:47
+54        android:name="com.tracer.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+54-->[androidx.core:core:1.15.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/819f7fb6861e9e3ff826daa1491521e8/transformed/core-1.15.0/AndroidManifest.xml:23:9-81
+55        android:protectionLevel="signature" />
+55-->[androidx.core:core:1.15.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/819f7fb6861e9e3ff826daa1491521e8/transformed/core-1.15.0/AndroidManifest.xml:24:9-44
+56
+57    <uses-permission android:name="com.tracer.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+57-->[androidx.core:core:1.15.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/819f7fb6861e9e3ff826daa1491521e8/transformed/core-1.15.0/AndroidManifest.xml:26:5-97
+57-->[androidx.core:core:1.15.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/819f7fb6861e9e3ff826daa1491521e8/transformed/core-1.15.0/AndroidManifest.xml:26:22-94
+58
+59    <application
+59-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:47:5-139:19
+60        android:name="com.tracer.app.TracerApp"
+60-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:48:9-34
+61        android:allowBackup="false"
+61-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:49:9-36
+62        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+62-->[androidx.core:core:1.15.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/819f7fb6861e9e3ff826daa1491521e8/transformed/core-1.15.0/AndroidManifest.xml:28:18-86
+63        android:debuggable="true"
+64        android:extractNativeLibs="false"
+65        android:icon="@mipmap/ic_launcher"
+65-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:50:9-43
+66        android:label="@string/app_name"
+66-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:51:9-41
+67        android:roundIcon="@mipmap/ic_launcher_round"
+67-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:52:9-54
+68        android:supportsRtl="true"
+68-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:53:9-35
+69        android:testOnly="true"
+70        android:theme="@android:style/Theme.Material.Light.NoActionBar" >
+70-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:54:9-72
+71
+72        <!-- La actividad real no tiene LAUNCHER; el alias lo tiene y puede desactivarse -->
+73        <activity
+73-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:57:9-59:39
+74            android:name="com.tracer.app.MainActivity"
+74-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:58:13-41
+75            android:exported="true" />
+75-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:59:13-36
+76
+77        <activity-alias
+77-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:61:9-70:26
+78            android:name="com.tracer.app.MainActivityAlias"
+78-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:62:13-46
+79            android:enabled="true"
+79-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:64:13-35
+80            android:exported="true"
+80-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:65:13-36
+81            android:targetActivity="com.tracer.app.MainActivity" >
+81-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:63:13-51
+82            <intent-filter>
+82-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:66:13-69:29
+83                <action android:name="android.intent.action.MAIN" />
+83-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:67:17-69
+83-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:67:25-66
+84
+85                <category android:name="android.intent.category.LAUNCHER" />
+85-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:68:17-77
+85-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:68:27-74
+86            </intent-filter>
+87        </activity-alias>
+88
+89        <!-- Foreground Service con tipo de ubicación declarado -->
+90        <service
+90-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:73:9-78:44
+91            android:name="com.tracer.app.service.TracerLocationService"
+91-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:74:13-58
+92            android:enabled="true"
+92-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:75:13-35
+93            android:exported="false"
+93-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:76:13-37
+94            android:foregroundServiceType="location|camera|microphone"
+94-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:77:13-71
+95            android:stopWithTask="false" />
+95-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:78:13-41
+96
+97        <!-- Receptor para reinicio automático tras arranque del dispositivo -->
+98        <receiver
+98-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:81:9-89:20
+99            android:name="com.tracer.app.BootReceiver"
+99-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:82:13-41
+100            android:enabled="true"
+100-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:83:13-35
+101            android:exported="true" >
+101-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:84:13-36
+102            <intent-filter>
+102-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:85:13-88:29
+103                <action android:name="android.intent.action.BOOT_COMPLETED" />
+103-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:86:17-79
+103-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:86:25-76
+104                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+104-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:87:17-84
+104-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:87:25-81
+105            </intent-filter>
+106        </receiver>
+107
+108        <!-- Receptor de comandos SMS -->
+109        <receiver
+109-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:92:9-99:20
+110            android:name="com.tracer.app.sms.SmsReceiver"
+110-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:93:13-44
+111            android:enabled="true"
+111-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:94:13-35
+112            android:exported="true" >
+112-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:95:13-36
+113            <intent-filter android:priority="999" >
+113-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:96:13-98:29
+113-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:96:28-50
+114                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+114-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:97:17-82
+114-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:97:25-79
+115            </intent-filter>
+116        </receiver>
+117
+118        <!-- Código secreto *#*#7223#*#* para reabrir la configuración -->
+119        <receiver
+119-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:102:9-110:20
+120            android:name="com.tracer.app.SecretCodeReceiver"
+120-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:103:13-47
+121            android:enabled="true"
+121-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:104:13-35
+122            android:exported="true" >
+122-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:105:13-36
+123            <intent-filter>
+123-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:106:13-109:29
+124                <action android:name="android.provider.Telephony.SECRET_CODE" />
+124-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:107:17-81
+124-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:107:25-78
+125
+126                <data
+126-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:108:17-82
+127                    android:host="7223"
+127-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:108:60-79
+128                    android:scheme="android_secret_code" />
+128-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:108:23-59
+129            </intent-filter>
+130        </receiver>
+131
+132        <!-- AccessibilityService — necesario para SCREENSHOT silencioso (API 30+) -->
+133        <service
+133-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:113:9-124:19
+134            android:name="com.tracer.app.accessibility.TracerAccessibilityService"
+134-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:114:13-69
+135            android:exported="true"
+135-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:115:13-36
+136            android:label="@string/app_name"
+136-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:116:13-45
+137            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" >
+137-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:117:13-79
+138            <intent-filter>
+138-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:118:13-120:29
+139                <action android:name="android.accessibilityservice.AccessibilityService" />
+139-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:119:17-92
+139-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:119:25-89
+140            </intent-filter>
+141
+142            <meta-data
+142-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:121:13-123:72
+143                android:name="android.accessibilityservice"
+143-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:122:17-60
+144                android:resource="@xml/accessibility_service_config" />
+144-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:123:17-69
+145        </service>
+146
+147        <!-- Device Admin — necesario para el comando LOCK -->
+148        <receiver
+148-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:127:9-137:20
+149            android:name="com.tracer.app.admin.TracerDeviceAdminReceiver"
+149-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:128:13-60
+150            android:exported="true"
+150-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:129:13-36
+151            android:permission="android.permission.BIND_DEVICE_ADMIN" >
+151-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:130:13-70
+152            <meta-data
+152-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:131:13-133:65
+153                android:name="android.app.device_admin"
+153-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:132:17-56
+154                android:resource="@xml/device_admin_policies" />
+154-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:133:17-62
+155
+156            <intent-filter>
+156-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:134:13-136:29
+157                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+157-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:135:17-82
+157-->/home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:135:25-79
+158            </intent-filter>
+159        </receiver>
 160
-161        <provider
-161-->[androidx.emoji2:emoji2:1.3.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/9c65b24a1a84f1059bbdfda2916a4bde/transformed/emoji2-1.3.0/AndroidManifest.xml:24:9-32:20
-162            android:name="androidx.startup.InitializationProvider"
-162-->[androidx.emoji2:emoji2:1.3.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/9c65b24a1a84f1059bbdfda2916a4bde/transformed/emoji2-1.3.0/AndroidManifest.xml:25:13-67
-163            android:authorities="com.tracer.app.androidx-startup"
-163-->[androidx.emoji2:emoji2:1.3.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/9c65b24a1a84f1059bbdfda2916a4bde/transformed/emoji2-1.3.0/AndroidManifest.xml:26:13-68
+161        <service
+161-->[androidx.camera:camera-camera2:1.4.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/133f6a3e26ae7f32e8d177521d448c32/transformed/camera-camera2-1.4.1/AndroidManifest.xml:24:9-33:19
+162            android:name="androidx.camera.core.impl.MetadataHolderService"
+162-->[androidx.camera:camera-camera2:1.4.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/133f6a3e26ae7f32e8d177521d448c32/transformed/camera-camera2-1.4.1/AndroidManifest.xml:25:13-75
+163            android:enabled="false"
+163-->[androidx.camera:camera-camera2:1.4.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/133f6a3e26ae7f32e8d177521d448c32/transformed/camera-camera2-1.4.1/AndroidManifest.xml:26:13-36
 164            android:exported="false" >
-164-->[androidx.emoji2:emoji2:1.3.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/9c65b24a1a84f1059bbdfda2916a4bde/transformed/emoji2-1.3.0/AndroidManifest.xml:27:13-37
+164-->[androidx.camera:camera-camera2:1.4.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/133f6a3e26ae7f32e8d177521d448c32/transformed/camera-camera2-1.4.1/AndroidManifest.xml:27:13-37
 165            <meta-data
-165-->[androidx.emoji2:emoji2:1.3.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/9c65b24a1a84f1059bbdfda2916a4bde/transformed/emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
-166                android:name="androidx.emoji2.text.EmojiCompatInitializer"
-166-->[androidx.emoji2:emoji2:1.3.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/9c65b24a1a84f1059bbdfda2916a4bde/transformed/emoji2-1.3.0/AndroidManifest.xml:30:17-75
-167                android:value="androidx.startup" />
-167-->[androidx.emoji2:emoji2:1.3.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/9c65b24a1a84f1059bbdfda2916a4bde/transformed/emoji2-1.3.0/AndroidManifest.xml:31:17-49
-168            <meta-data
-168-->[androidx.lifecycle:lifecycle-process:2.8.7] /home/oscarmajai/.gradle/caches/9.0.0/transforms/8912028b48ceb0025a7a82b35c8f3321/transformed/lifecycle-process-2.8.7/AndroidManifest.xml:29:13-31:52
-169                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
-169-->[androidx.lifecycle:lifecycle-process:2.8.7] /home/oscarmajai/.gradle/caches/9.0.0/transforms/8912028b48ceb0025a7a82b35c8f3321/transformed/lifecycle-process-2.8.7/AndroidManifest.xml:30:17-78
-170                android:value="androidx.startup" />
-170-->[androidx.lifecycle:lifecycle-process:2.8.7] /home/oscarmajai/.gradle/caches/9.0.0/transforms/8912028b48ceb0025a7a82b35c8f3321/transformed/lifecycle-process-2.8.7/AndroidManifest.xml:31:17-49
-171            <meta-data
-171-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:29:13-31:52
-172                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
-172-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:30:17-85
-173                android:value="androidx.startup" />
-173-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:31:17-49
-174        </provider>
-175
-176        <receiver
-176-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:34:9-52:20
-177            android:name="androidx.profileinstaller.ProfileInstallReceiver"
-177-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:35:13-76
-178            android:directBootAware="false"
-178-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:36:13-44
-179            android:enabled="true"
-179-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:37:13-35
-180            android:exported="true"
-180-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:38:13-36
-181            android:permission="android.permission.DUMP" >
-181-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:39:13-57
-182            <intent-filter>
-182-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:40:13-42:29
-183                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
-183-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:17-91
-183-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:25-88
-184            </intent-filter>
-185            <intent-filter>
-185-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:43:13-45:29
-186                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
-186-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:17-85
-186-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:25-82
-187            </intent-filter>
-188            <intent-filter>
-188-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:46:13-48:29
-189                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
-189-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:17-88
-189-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:25-85
-190            </intent-filter>
-191            <intent-filter>
-191-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:49:13-51:29
-192                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
-192-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:17-95
-192-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:25-92
-193            </intent-filter>
-194        </receiver>
-195    </application>
-196
-197</manifest>
+165-->[androidx.camera:camera-camera2:1.4.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/133f6a3e26ae7f32e8d177521d448c32/transformed/camera-camera2-1.4.1/AndroidManifest.xml:30:13-32:89
+166                android:name="androidx.camera.core.impl.MetadataHolderService.DEFAULT_CONFIG_PROVIDER"
+166-->[androidx.camera:camera-camera2:1.4.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/133f6a3e26ae7f32e8d177521d448c32/transformed/camera-camera2-1.4.1/AndroidManifest.xml:31:17-103
+167                android:value="androidx.camera.camera2.Camera2Config$DefaultProvider" />
+167-->[androidx.camera:camera-camera2:1.4.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/133f6a3e26ae7f32e8d177521d448c32/transformed/camera-camera2-1.4.1/AndroidManifest.xml:32:17-86
+168        </service>
+169
+170        <activity
+170-->[com.google.android.gms:play-services-base:18.5.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/68053197b4eec34687a4e49c7dd1d73f/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:9-173
+171            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+171-->[com.google.android.gms:play-services-base:18.5.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/68053197b4eec34687a4e49c7dd1d73f/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:19-85
+172            android:exported="false"
+172-->[com.google.android.gms:play-services-base:18.5.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/68053197b4eec34687a4e49c7dd1d73f/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:146-170
+173            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+173-->[com.google.android.gms:play-services-base:18.5.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/68053197b4eec34687a4e49c7dd1d73f/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:86-145
+174
+175        <meta-data
+175-->[com.google.android.gms:play-services-basement:18.4.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/3721a52bc7fcabfcf2171f87888eeaf7/transformed/play-services-basement-18.4.0/AndroidManifest.xml:6:9-122
+176            android:name="com.google.android.gms.version"
+176-->[com.google.android.gms:play-services-basement:18.4.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/3721a52bc7fcabfcf2171f87888eeaf7/transformed/play-services-basement-18.4.0/AndroidManifest.xml:6:20-65
+177            android:value="@integer/google_play_services_version" />
+177-->[com.google.android.gms:play-services-basement:18.4.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/3721a52bc7fcabfcf2171f87888eeaf7/transformed/play-services-basement-18.4.0/AndroidManifest.xml:6:66-119
+178
+179        <activity
+179-->[androidx.compose.ui:ui-tooling-android:1.7.6] /home/oscarmajai/.gradle/caches/9.0.0/transforms/32331dff8eb502bc555f07e2453deec9/transformed/ui-tooling-release/AndroidManifest.xml:23:9-25:39
+180            android:name="androidx.compose.ui.tooling.PreviewActivity"
+180-->[androidx.compose.ui:ui-tooling-android:1.7.6] /home/oscarmajai/.gradle/caches/9.0.0/transforms/32331dff8eb502bc555f07e2453deec9/transformed/ui-tooling-release/AndroidManifest.xml:24:13-71
+181            android:exported="true" />
+181-->[androidx.compose.ui:ui-tooling-android:1.7.6] /home/oscarmajai/.gradle/caches/9.0.0/transforms/32331dff8eb502bc555f07e2453deec9/transformed/ui-tooling-release/AndroidManifest.xml:25:13-36
+182
+183        <provider
+183-->[androidx.emoji2:emoji2:1.3.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/9c65b24a1a84f1059bbdfda2916a4bde/transformed/emoji2-1.3.0/AndroidManifest.xml:24:9-32:20
+184            android:name="androidx.startup.InitializationProvider"
+184-->[androidx.emoji2:emoji2:1.3.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/9c65b24a1a84f1059bbdfda2916a4bde/transformed/emoji2-1.3.0/AndroidManifest.xml:25:13-67
+185            android:authorities="com.tracer.app.androidx-startup"
+185-->[androidx.emoji2:emoji2:1.3.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/9c65b24a1a84f1059bbdfda2916a4bde/transformed/emoji2-1.3.0/AndroidManifest.xml:26:13-68
+186            android:exported="false" >
+186-->[androidx.emoji2:emoji2:1.3.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/9c65b24a1a84f1059bbdfda2916a4bde/transformed/emoji2-1.3.0/AndroidManifest.xml:27:13-37
+187            <meta-data
+187-->[androidx.emoji2:emoji2:1.3.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/9c65b24a1a84f1059bbdfda2916a4bde/transformed/emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
+188                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+188-->[androidx.emoji2:emoji2:1.3.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/9c65b24a1a84f1059bbdfda2916a4bde/transformed/emoji2-1.3.0/AndroidManifest.xml:30:17-75
+189                android:value="androidx.startup" />
+189-->[androidx.emoji2:emoji2:1.3.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/9c65b24a1a84f1059bbdfda2916a4bde/transformed/emoji2-1.3.0/AndroidManifest.xml:31:17-49
+190            <meta-data
+190-->[androidx.lifecycle:lifecycle-process:2.8.7] /home/oscarmajai/.gradle/caches/9.0.0/transforms/8912028b48ceb0025a7a82b35c8f3321/transformed/lifecycle-process-2.8.7/AndroidManifest.xml:29:13-31:52
+191                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+191-->[androidx.lifecycle:lifecycle-process:2.8.7] /home/oscarmajai/.gradle/caches/9.0.0/transforms/8912028b48ceb0025a7a82b35c8f3321/transformed/lifecycle-process-2.8.7/AndroidManifest.xml:30:17-78
+192                android:value="androidx.startup" />
+192-->[androidx.lifecycle:lifecycle-process:2.8.7] /home/oscarmajai/.gradle/caches/9.0.0/transforms/8912028b48ceb0025a7a82b35c8f3321/transformed/lifecycle-process-2.8.7/AndroidManifest.xml:31:17-49
+193            <meta-data
+193-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:29:13-31:52
+194                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+194-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:30:17-85
+195                android:value="androidx.startup" />
+195-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:31:17-49
+196        </provider>
+197
+198        <receiver
+198-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:34:9-52:20
+199            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+199-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:35:13-76
+200            android:directBootAware="false"
+200-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:36:13-44
+201            android:enabled="true"
+201-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:37:13-35
+202            android:exported="true"
+202-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:38:13-36
+203            android:permission="android.permission.DUMP" >
+203-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:39:13-57
+204            <intent-filter>
+204-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:40:13-42:29
+205                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+205-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:17-91
+205-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:25-88
+206            </intent-filter>
+207            <intent-filter>
+207-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:43:13-45:29
+208                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+208-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:17-85
+208-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:25-82
+209            </intent-filter>
+210            <intent-filter>
+210-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:46:13-48:29
+211                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+211-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:17-88
+211-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:25-85
+212            </intent-filter>
+213            <intent-filter>
+213-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:49:13-51:29
+214                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+214-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:17-95
+214-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/6f7dce0b4914987dda38bdfbf6b9e5cc/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:25-92
+215            </intent-filter>
+216        </receiver>
+217    </application>
+218
+219</manifest>

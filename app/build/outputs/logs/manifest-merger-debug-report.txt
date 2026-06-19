@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:2:1-120:12
-INJECTED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:2:1-120:12
-INJECTED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:2:1-120:12
-INJECTED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:2:1-120:12
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:2:1-141:12
+INJECTED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:2:1-141:12
+INJECTED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:2:1-141:12
+INJECTED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:2:1-141:12
 MERGED from [androidx.camera:camera-lifecycle:1.4.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/19946503709ad41d4e5691a67df993a0/transformed/camera-lifecycle-1.4.1/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.camera:camera-camera2:1.4.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/133f6a3e26ae7f32e8d177521d448c32/transformed/camera-camera2-1.4.1/AndroidManifest.xml:17:1-36:12
 MERGED from [androidx.camera:camera-core:1.4.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/47edfaf03c7f468fd806929cf511a411/transformed/camera-core-1.4.1/AndroidManifest.xml:17:1-36:12
@@ -134,33 +134,45 @@ uses-permission#android.permission.FOREGROUND_SERVICE_CAMERA
 ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:26:5-84
 	android:name
 		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:26:22-81
+uses-permission#android.permission.RECORD_AUDIO
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:29:5-71
+	android:name
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:29:22-68
+uses-permission#android.permission.FOREGROUND_SERVICE_MICROPHONE
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:30:5-88
+	android:name
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:30:22-85
 uses-permission#android.permission.CALL_PHONE
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:29:5-69
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:33:5-69
 	android:name
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:29:22-66
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:33:22-66
 uses-permission#android.permission.CHANGE_WIFI_STATE
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:32:5-76
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:36:5-76
 	android:name
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:32:22-73
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:36:22-73
 uses-permission#android.permission.ACCESS_WIFI_STATE
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:33:5-76
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:37:5-76
 	android:name
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:33:22-73
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:37:22-73
 uses-permission#android.permission.CHANGE_NETWORK_STATE
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:34:5-79
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:38:5-79
 	android:name
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:34:22-76
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:38:22-76
 uses-permission#android.permission.ACCESS_NETWORK_STATE
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:35:5-79
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:39:5-79
 	android:name
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:35:22-76
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:39:22-76
+uses-permission#android.permission.VIBRATE
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:42:5-66
+	android:name
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:42:22-63
 uses-permission#android.permission.POST_NOTIFICATIONS
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:38:5-77
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:45:5-77
 	android:name
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:38:22-74
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:45:22-74
 application
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:40:5-118:19
-INJECTED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:40:5-118:19
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:47:5-139:19
+INJECTED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:47:5-139:19
 MERGED from [androidx.camera:camera-camera2:1.4.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/133f6a3e26ae7f32e8d177521d448c32/transformed/camera-camera2-1.4.1/AndroidManifest.xml:23:5-34:19
 MERGED from [androidx.camera:camera-camera2:1.4.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/133f6a3e26ae7f32e8d177521d448c32/transformed/camera-camera2-1.4.1/AndroidManifest.xml:23:5-34:19
 MERGED from [androidx.camera:camera-core:1.4.1] /home/oscarmajai/.gradle/caches/9.0.0/transforms/47edfaf03c7f468fd806929cf511a411/transformed/camera-core-1.4.1/AndroidManifest.xml:23:5-34:19
@@ -192,131 +204,153 @@ MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/oscar
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.15.0] /home/oscarmajai/.gradle/caches/9.0.0/transforms/819f7fb6861e9e3ff826daa1491521e8/transformed/core-1.15.0/AndroidManifest.xml:28:18-86
 	android:supportsRtl
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:46:9-35
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:53:9-35
 	android:label
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:44:9-41
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:51:9-41
 	android:roundIcon
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:45:9-54
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:52:9-54
 	android:icon
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:43:9-43
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:50:9-43
 	android:allowBackup
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:42:9-36
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:49:9-36
 	android:theme
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:47:9-72
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:54:9-72
 	android:name
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:41:9-34
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:48:9-34
 activity#com.tracer.app.MainActivity
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:50:9-52:39
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:57:9-59:39
 	android:exported
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:52:13-36
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:59:13-36
 	android:name
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:51:13-41
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:58:13-41
 activity-alias#com.tracer.app.MainActivityAlias
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:54:9-63:26
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:61:9-70:26
 	android:enabled
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:57:13-35
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:64:13-35
 	android:exported
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:58:13-36
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:65:13-36
 	android:targetActivity
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:56:13-51
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:63:13-51
 	android:name
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:55:13-46
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:62:13-46
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:59:13-62:29
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:66:13-69:29
 action#android.intent.action.MAIN
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:60:17-69
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:67:17-69
 	android:name
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:60:25-66
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:67:25-66
 category#android.intent.category.LAUNCHER
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:61:17-77
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:68:17-77
 	android:name
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:61:27-74
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:68:27-74
 service#com.tracer.app.service.TracerLocationService
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:66:9-71:44
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:73:9-78:44
 	android:enabled
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:68:13-35
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:75:13-35
 	android:exported
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:69:13-37
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:76:13-37
 	android:stopWithTask
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:71:13-41
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:78:13-41
 	android:foregroundServiceType
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:70:13-60
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:77:13-71
 	android:name
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:67:13-58
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:74:13-58
 receiver#com.tracer.app.BootReceiver
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:74:9-82:20
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:81:9-89:20
 	android:enabled
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:76:13-35
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:83:13-35
 	android:exported
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:77:13-36
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:84:13-36
 	android:name
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:75:13-41
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:82:13-41
 intent-filter#action:name:android.intent.action.BOOT_COMPLETED+action:name:android.intent.action.MY_PACKAGE_REPLACED
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:78:13-81:29
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:85:13-88:29
 action#android.intent.action.BOOT_COMPLETED
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:79:17-79
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:86:17-79
 	android:name
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:79:25-76
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:86:25-76
 action#android.intent.action.MY_PACKAGE_REPLACED
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:80:17-84
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:87:17-84
 	android:name
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:80:25-81
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:87:25-81
 receiver#com.tracer.app.sms.SmsReceiver
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:85:9-92:20
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:92:9-99:20
 	android:enabled
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:87:13-35
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:94:13-35
 	android:exported
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:88:13-36
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:95:13-36
 	android:name
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:86:13-44
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:93:13-44
 intent-filter#action:name:android.provider.Telephony.SMS_RECEIVED
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:89:13-91:29
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:96:13-98:29
 	android:priority
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:89:28-50
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:96:28-50
 action#android.provider.Telephony.SMS_RECEIVED
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:90:17-82
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:97:17-82
 	android:name
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:90:25-79
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:97:25-79
 receiver#com.tracer.app.SecretCodeReceiver
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:95:9-103:20
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:102:9-110:20
 	android:enabled
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:97:13-35
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:104:13-35
 	android:exported
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:98:13-36
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:105:13-36
 	android:name
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:96:13-47
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:103:13-47
 intent-filter#action:name:android.provider.Telephony.SECRET_CODE+data:host:7223+data:scheme:android_secret_code
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:99:13-102:29
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:106:13-109:29
 action#android.provider.Telephony.SECRET_CODE
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:100:17-81
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:107:17-81
 	android:name
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:100:25-78
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:107:25-78
 data
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:101:17-82
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:108:17-82
 	android:host
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:101:60-79
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:108:60-79
 	android:scheme
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:101:23-59
-receiver#com.tracer.app.admin.TracerDeviceAdminReceiver
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:106:9-116:20
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:108:23-59
+service#com.tracer.app.accessibility.TracerAccessibilityService
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:113:9-124:19
+	android:label
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:116:13-45
 	android:exported
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:108:13-36
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:115:13-36
 	android:permission
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:109:13-70
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:117:13-79
 	android:name
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:107:13-60
-meta-data#android.app.device_admin
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:110:13-112:65
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:114:13-69
+intent-filter#action:name:android.accessibilityservice.AccessibilityService
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:118:13-120:29
+action#android.accessibilityservice.AccessibilityService
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:119:17-92
+	android:name
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:119:25-89
+meta-data#android.accessibilityservice
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:121:13-123:72
 	android:resource
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:112:17-62
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:123:17-69
 	android:name
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:111:17-56
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:122:17-60
+receiver#com.tracer.app.admin.TracerDeviceAdminReceiver
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:127:9-137:20
+	android:exported
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:129:13-36
+	android:permission
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:130:13-70
+	android:name
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:128:13-60
+meta-data#android.app.device_admin
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:131:13-133:65
+	android:resource
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:133:17-62
+	android:name
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:132:17-56
 intent-filter#action:name:android.app.action.DEVICE_ADMIN_ENABLED
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:113:13-115:29
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:134:13-136:29
 action#android.app.action.DEVICE_ADMIN_ENABLED
-ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:114:17-82
+ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:135:17-82
 	android:name
-		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:114:25-79
+		ADDED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml:135:25-79
 uses-sdk
 INJECTED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /home/oscarmajai/Proyectos/Tracer/app/src/main/AndroidManifest.xml

@@ -26,6 +26,7 @@ type Config struct {
 	APIToken  string
 	DBFile    string
 	PhotosDir string
+	AudioDir  string
 	Port      string
 	Username  string
 	Password  string
@@ -42,6 +43,7 @@ func loadConfig() Config {
 		APIToken:  getEnv("TRACER_API_TOKEN", "TracerSecretToken123"),
 		DBFile:    getEnv("TRACER_DB_FILE", "./telemetry.db"),
 		PhotosDir: getEnv("TRACER_PHOTOS_DIR", "./photos"),
+		AudioDir:  getEnv("TRACER_AUDIO_DIR", "./audio"),
 		Port:      getEnv("PORT", "3000"),
 		Username:  getEnv("TRACER_USERNAME", "admin"),
 		Password:  getEnv("TRACER_PASSWORD", "tracer1234"),
@@ -191,7 +193,8 @@ type AlertPayload struct {
 	AttemptNum *int     `json:"attempt_num,omitempty"`
 }
 
-var validFilename = regexp.MustCompile(`^[a-zA-Z0-9_.\-]+\.jpg$`)
+var validFilename      = regexp.MustCompile(`^[a-zA-Z0-9_.\-]+\.jpg$`)
+var validAudioFilename = regexp.MustCompile(`^[a-zA-Z0-9_.\-]+\.m4a$`)
 
 // ── Database ──────────────────────────────────────────────────────────────────
 
@@ -699,6 +702,83 @@ func getPhotoList(c *fiber.Ctx) error {
 	return c.JSON(infos)
 }
 
+// ── Audio handlers ────────────────────────────────────────────────────────────
+
+func postAudio(c *fiber.Ctx) error {
+	deviceID := c.FormValue("device_id", "unknown")
+	file, err := c.FormFile("audio")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "no audio file"})
+	}
+
+	if err := os.MkdirAll(cfg.AudioDir, 0755); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "audio dir error"})
+	}
+
+	filename := fmt.Sprintf("%s_%d.m4a", deviceID, time.Now().UnixMilli())
+	path := fmt.Sprintf("%s/%s", cfg.AudioDir, filename)
+	if err := c.SaveFile(file, path); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "save failed"})
+	}
+
+	ts := time.Now().UTC().Format(time.RFC3339)
+	log.Printf("audio saved: %s", filename)
+	go broadcast("audio", fiber.Map{"filename": filename, "timestamp": ts})
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"filename": filename, "timestamp": ts})
+}
+
+func getAudioList(c *fiber.Ctx) error {
+	limit := c.QueryInt("limit", 10)
+	if limit < 1 {
+		limit = 1
+	}
+	if limit > 50 {
+		limit = 50
+	}
+
+	type AudioInfo struct {
+		Filename  string `json:"filename"`
+		Timestamp string `json:"timestamp"`
+	}
+
+	entries, err := os.ReadDir(cfg.AudioDir)
+	if err != nil {
+		return c.JSON([]AudioInfo{})
+	}
+	var infos []AudioInfo
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".m4a") {
+			continue
+		}
+		info, err := e.Info()
+		if err != nil {
+			continue
+		}
+		infos = append(infos, AudioInfo{
+			Filename:  e.Name(),
+			Timestamp: info.ModTime().UTC().Format(time.RFC3339),
+		})
+	}
+	sort.Slice(infos, func(i, j int) bool {
+		return infos[i].Timestamp > infos[j].Timestamp
+	})
+	if len(infos) > limit {
+		infos = infos[:limit]
+	}
+	if infos == nil {
+		infos = []AudioInfo{}
+	}
+	return c.JSON(infos)
+}
+
+func getAudioFile(c *fiber.Ctx) error {
+	filename := c.Params("filename")
+	if !validAudioFilename.MatchString(filename) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid filename"})
+	}
+	return c.SendFile(fmt.Sprintf("%s/%s", cfg.AudioDir, filename))
+}
+
 // ── Alert handler ─────────────────────────────────────────────────────────────
 
 func postDeviceAlert(c *fiber.Ctx) error {
@@ -773,6 +853,12 @@ func main() {
 	cfg = loadConfig()
 	initDatabase()
 	defer db.Close()
+	if err := os.MkdirAll(cfg.PhotosDir, 0755); err != nil {
+		log.Fatalf("cannot create photos dir: %v", err)
+	}
+	if err := os.MkdirAll(cfg.AudioDir, 0755); err != nil {
+		log.Fatalf("cannot create audio dir: %v", err)
+	}
 	startWriteWorker()
 
 	app := fiber.New(fiber.Config{DisableStartupMessage: false})
@@ -813,6 +899,10 @@ func main() {
 	api.Get("/photo/latest", getLatestPhoto)
 	api.Get("/photo/list", getPhotoList)
 	api.Get("/photo/file/:filename", getPhotoFile)
+
+	api.Post("/audio", postAudio)
+	api.Get("/audio/list", getAudioList)
+	api.Get("/audio/file/:filename", getAudioFile)
 
 	api.Get("/geofence", getGeofence)
 	api.Post("/geofence", postGeofence)
