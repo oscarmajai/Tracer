@@ -46,13 +46,22 @@ function ActivityView({ cmdLog, devices }) {
 
   const all = cmdLog.map((cmd) => {
     const kind = CMD_TO_KIND[cmd.command] || cmd.command.toLowerCase();
+    // pending = en cola · dispatched = recibido por el dispositivo, en ejecución
+    const status = cmd.status === 'executed' ? 'completed'
+      : (cmd.status === 'pending' || cmd.status === 'dispatched') ? 'in-progress'
+      : 'completed';
+    const statusLabel = cmd.status === 'executed' ? 'Completado'
+      : cmd.status === 'dispatched' ? 'En el dispositivo'
+      : cmd.status === 'pending' ? 'En cola'
+      : 'Completado';
     return {
       id: 'cmd-' + cmd.id,
       kind,
       deviceId: devices[0]?.id || '',
       timestamp: cmd.ts || tracerFormatHistoryTime(cmd.created_at),
       detail: cmd.args || cmd.result || '—',
-      status: cmd.status === 'executed' ? 'completed' : cmd.status === 'pending' ? 'in-progress' : 'completed',
+      status,
+      statusLabel,
     };
   });
 
@@ -98,7 +107,7 @@ function ActivityView({ cmdLog, devices }) {
               <div className="activity-meta">
                 <div className="activity-time mono">{a.timestamp}</div>
                 <div className={`activity-status activity-status-${a.status}`}>
-                  {a.status === 'completed' ? 'Completado' : a.status === 'in-progress' ? 'Pendiente' : 'Cancelado'}
+                  {a.statusLabel}
                 </div>
               </div>
             </div>

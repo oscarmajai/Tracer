@@ -83,7 +83,7 @@ class CommandHandler(
             "SILENT_CALL" -> handleSilentCall(sender)
             "STEALTH"     -> handleStealth(sender)
             "BLOCK_APPS"  -> handleBlockApps(sender)
-            else          -> if (sender != "remote") reply(sender, "Tracer: comando desconocido")
+            else          -> reply(sender, "Tracer: comando desconocido ($command)")
         }
     }
 
@@ -311,7 +311,7 @@ class CommandHandler(
         val adminComponent = ComponentName(context, TracerDeviceAdminReceiver::class.java)
 
         if (!dpm.isAdminActive(adminComponent)) {
-            if (sender != "remote") reply(sender, "Tracer WIPE: admin no activado")
+            reply(sender, "Tracer WIPE: admin no activado")
             return
         }
 
@@ -321,6 +321,8 @@ class CommandHandler(
             if (isConfirm) {
                 reply(sender, "Tracer WIPE: ejecutando borrado de fabrica...")
                 dpm.wipeData(0)
+            } else {
+                reply(sender, "Tracer WIPE: ignorado — falta el argumento CONFIRM")
             }
             return
         }

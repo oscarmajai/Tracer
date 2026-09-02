@@ -31,7 +31,7 @@ interface TracerApiService {
         @Header("Authorization") token: String
     ): retrofit2.Response<List<CommandRecord>>
 
-    @POST("api/command/:id/ack")
+    @POST("api/command/{id}/ack")
     suspend fun ackCommand(
         @Header("Authorization") token: String,
         @Path("id") id: Long

