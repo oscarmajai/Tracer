@@ -31,6 +31,8 @@ import com.tracer.app.data.CommandResultPayload
 import com.tracer.app.data.LocationTelemetry
 import androidx.core.content.ContextCompat
 import android.graphics.Bitmap
+import com.google.gson.Gson
+import java.util.Locale
 import com.tracer.app.accessibility.TracerAccessibilityService
 import com.tracer.app.camera.AudioRecorder
 import com.tracer.app.camera.PhotoCapture
@@ -90,8 +92,10 @@ class TracerLocationService : Service() {
         const val KEY_LAST_CMD    = "last_cmd"
 
         // Cola de resultados pendientes de subir (3B)
-        private const val PREFS_QUEUE         = "tracer_queue"
-        private const val KEY_PENDING_RESULTS = "pending_results"
+        private const val PREFS_QUEUE           = "tracer_queue"
+        private const val KEY_PENDING_RESULTS   = "pending_results"
+        private const val KEY_PENDING_LOCATIONS = "pending_locations"
+        private const val MAX_QUEUED_LOCATIONS  = 200
     }
 
     private val serviceJob   = SupervisorJob()
@@ -300,19 +304,52 @@ class TracerLocationService : Service() {
                 saveLocationStatus(telemetry.latitude, telemetry.longitude, telemetry.timestamp, result)
                 if (!response.isSuccessful) Log.w(TAG, "Server responded ${response.code()}")
             } catch (e: Exception) {
-                saveLocationStatus(telemetry.latitude, telemetry.longitude, telemetry.timestamp, "✗ ${e.message}")
-                Log.e(TAG, "Network error: ${e.message}")
+                // Sin internet: encolar el punto para reenviarlo cuando vuelva la red.
+                enqueueTelemetry(telemetry)
+                saveLocationStatus(telemetry.latitude, telemetry.longitude, telemetry.timestamp, "⧗ en cola")
+                Log.e(TAG, "Network error, punto encolado: ${e.message}")
             }
         }
     }
 
     private fun saveLocationStatus(lat: Double, lon: Double, ts: String, result: String) {
         getSharedPreferences(PREFS_STATUS, MODE_PRIVATE).edit()
-            .putString(KEY_LAST_LAT, "%.5f".format(lat))
-            .putString(KEY_LAST_LON, "%.5f".format(lon))
+            .putString(KEY_LAST_LAT, String.format(Locale.US, "%.5f", lat))
+            .putString(KEY_LAST_LON, String.format(Locale.US, "%.5f", lon))
             .putString(KEY_LAST_TS, ts)
             .putString(KEY_LAST_RESULT, result)
             .apply()
+    }
+
+    // ── Cola de ubicaciones offline ──────────────────────────────────────────
+
+    private fun enqueueTelemetry(t: LocationTelemetry) {
+        val prefs = getSharedPreferences(PREFS_QUEUE, MODE_PRIVATE)
+        val existing = (prefs.getString(KEY_PENDING_LOCATIONS, "") ?: "")
+            .lines().filter { it.isNotBlank() }
+        val updated = (existing + Gson().toJson(t)).takeLast(MAX_QUEUED_LOCATIONS)
+        prefs.edit().putString(KEY_PENDING_LOCATIONS, updated.joinToString("\n")).apply()
+        Log.d(TAG, "Ubicación encolada offline (${updated.size} en cola)")
+    }
+
+    private suspend fun flushLocationQueue() {
+        val prefs = getSharedPreferences(PREFS_QUEUE, MODE_PRIVATE)
+        val lines = (prefs.getString(KEY_PENDING_LOCATIONS, "") ?: "")
+            .lines().filter { it.isNotBlank() }
+        if (lines.isEmpty()) return
+
+        val gson = Gson()
+        val failed = mutableListOf<String>()
+        for (line in lines) {
+            val t = runCatching { gson.fromJson(line, LocationTelemetry::class.java) }.getOrNull()
+            if (t == null) continue // línea corrupta: descartar
+            val ok = runCatching {
+                apiService.postLocation(TracerApiService.AUTH_TOKEN, t).isSuccessful
+            }.getOrDefault(false)
+            if (!ok) failed.add(line)
+        }
+        prefs.edit().putString(KEY_PENDING_LOCATIONS, failed.joinToString("\n")).apply()
+        if (failed.size < lines.size) Log.d(TAG, "Cola de ubicaciones: subidas ${lines.size - failed.size}")
     }
 
     // ── Foto ──────────────────────────────────────────────────────────────────
@@ -562,6 +599,7 @@ class TracerLocationService : Service() {
     }
 
     private suspend fun pollCommandsOnce() {
+        flushLocationQueue() // Reenviar ubicaciones generadas sin conexión
         flushResultQueue() // Intentar subir resultados pendientes primero
         runCatching {
             val response = apiService.getPendingCommands(TracerApiService.AUTH_TOKEN)

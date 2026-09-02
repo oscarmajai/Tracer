@@ -98,7 +98,7 @@ web/
 Mapeo de comandos UI → backend (los nombres del backend viajan a Android):
 `ring→RING · lost→LOCK · wipe→WIPE · photo→PHOTO · audio→AUDIO · screen→SCREENSHOT · silent-call→SILENT_CALL · flash→FLASH · vibrate→VIBRATE · gps→GPS_HIGH · locate→LOCATE · callback→CALLBACK · message→MESSAGE · stealth→STEALTH · apps→BLOCK_APPS · key→RESET_PIN`
 
-Toggles (no en el mapa anterior): `alert→ALERT_ON/ALERT_OFF · keyguard→KEYGUARD_ON/KEYGUARD_OFF`. Variantes de parada: `RING_STOP · FLASH_STOP · VIBRATE_STOP`.
+Toggles (no en el mapa anterior): `alert→ALERT_ON/ALERT_OFF · keyguard→KEYGUARD_ON/KEYGUARD_OFF`. Variantes de parada: `RING_STOP · FLASH_STOP · VIBRATE_STOP`. `UNSTEALTH` revierte `STEALTH` (vía de recuperación por SMS si el código secreto no llega).
 
 `GEO_BREACH` es un pseudo-comando: lo inserta el backend en `commands` cuando `checkGeofence` detecta salida de la zona; Android lo ejecuta (`handleGeoBreach`) y reporta resultado como cualquier otro.
 
