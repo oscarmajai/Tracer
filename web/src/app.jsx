@@ -51,6 +51,42 @@ const COMMAND_TOASTS = {
   keyguard_off:  { tone: 'default', title: () => 'Teclado seguro desactivado', detail: 'Funciones de bloqueo restauradas.' },
 };
 
+const NOTIF_STORAGE_KEY = 'tracer_notifications';
+const NOTIF_MAX = 60;
+
+const ALERT_TITLES = {
+  pin_fail: 'Intento de acceso fallido',
+  sim_change: 'Alerta: SIM cambiada',
+};
+
+// Mapea una alerta del backend (evento WS o fila de /api/alert/history) a la
+// forma de notificación que usa la UI. `id` es estable para poder deduplicar.
+function tracerAlertToNotif(a) {
+  const title = ALERT_TITLES[a.type] || 'Alerta del dispositivo';
+  const detail = a.type === 'pin_fail'
+    ? `Intento #${a.attempt_num ?? 1} — foto capturada automáticamente`
+    : (a.message || '');
+  const when = a.timestamp ? new Date(a.timestamp) : new Date();
+  return {
+    id: a.id != null ? 'alert-' + a.id : 'n-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+    deviceId: a.device_id || '',
+    type: 'security',
+    title,
+    detail,
+    time: when.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
+    ts: when.toISOString(),
+    unread: true,
+  };
+}
+
+function tracerLoadStoredNotifs() {
+  try {
+    const raw = localStorage.getItem(NOTIF_STORAGE_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch { return []; }
+}
+
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const [screen, setScreen] = React.useState('login');
@@ -66,8 +102,8 @@ function App() {
   // Command log from API (for activity view)
   const [cmdLog, setCmdLog] = React.useState([]);
 
-  // Notifications from WebSocket events
-  const [notifications, setNotifications] = React.useState([]);
+  // Notifications: eventos WS en vivo + historial persistido de /api/alert/history
+  const [notifications, setNotifications] = React.useState(tracerLoadStoredNotifs);
 
   // Username
   const [username, setUsername] = React.useState('');
@@ -265,32 +301,52 @@ function App() {
 
   // ── Add notification ─────────────────────────────────────────────────
   const addNotification = React.useCallback((notif) => {
-    setNotifications(prev => [{
-      id: 'n-' + Date.now(),
-      deviceId: deviceRef.current?.id || '',
-      type: notif.type || 'system',
-      title: notif.title,
-      detail: notif.detail || '',
-      time: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
-      unread: true,
-    }, ...prev]);
+    const id = notif.id || 'n-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+    setNotifications(prev => {
+      if (prev.some(n => n.id === id)) return prev;
+      const entry = {
+        id,
+        deviceId: notif.deviceId || deviceRef.current?.id || '',
+        type: notif.type || 'system',
+        title: notif.title,
+        detail: notif.detail || '',
+        time: notif.time || new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
+        ts: notif.ts || new Date().toISOString(),
+        unread: notif.unread !== false,
+      };
+      return [entry, ...prev].slice(0, NOTIF_MAX);
+    });
+  }, []);
+
+  // Persistir notificaciones para que sobrevivan a un recarga del panel
+  React.useEffect(() => {
+    try { localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(notifications)); } catch {}
+  }, [notifications]);
+
+  // ── Hidratar historial de alertas desde el backend ──────────────────
+  const hydrateAlerts = React.useCallback(async () => {
+    try {
+      const rows = await tracerApiFetch('/api/alert/history?limit=50');
+      if (!Array.isArray(rows) || rows.length === 0) return;
+      setNotifications(prev => {
+        const known = new Set(prev.map(n => n.id));
+        const fresh = rows
+          .map(tracerAlertToNotif)
+          .filter(n => !known.has(n.id))
+          .map(n => ({ ...n, unread: false })); // el historial no cuenta como no leído
+        if (fresh.length === 0) return prev;
+        return [...prev, ...fresh]
+          .sort((a, b) => (b.ts || '').localeCompare(a.ts || ''))
+          .slice(0, NOTIF_MAX);
+      });
+    } catch {}
   }, []);
 
   // ── Handle device alert from WebSocket ───────────────────────────────
   const handleDeviceAlert = React.useCallback((data) => {
-    if (data.type === 'pin_fail') {
-      tracerSendNotification('Intento de acceso fallido', `Intento #${data.attempt_num ?? 1}`);
-      addNotification({
-        type: 'security',
-        title: 'Intento de acceso fallido',
-        detail: `Intento #${data.attempt_num ?? 1} — foto capturada automáticamente`,
-      });
-      return;
-    }
-    const labels = { sim_change: 'Alerta: SIM cambiada' };
-    const title = labels[data.type] || 'Alerta del dispositivo';
-    tracerSendNotification(title, data.message || '');
-    addNotification({ type: 'security', title, detail: data.message || '' });
+    const notif = tracerAlertToNotif(data);
+    tracerSendNotification(notif.title, notif.detail);
+    addNotification(notif);
   }, [addNotification]);
 
   // ── Handle WebSocket messages ─────────────────────────────────────────
@@ -320,6 +376,13 @@ function App() {
           detail: msg.data?.filename || '',
         });
         break;
+      case 'audio':
+        addNotification({
+          type: 'system',
+          title: 'Grabación de audio lista',
+          detail: msg.data?.filename || '',
+        });
+        break;
       case 'geofence_breach':
         tracerSendNotification(
           'Alerta: zona segura abandonada',
@@ -333,6 +396,8 @@ function App() {
         break;
       case 'alert':
         handleDeviceAlert(msg.data);
+        break;
+      default:
         break;
     }
   }, [updateDeviceFromLatest, setStatus, fetchCmdLog, addNotification, handleDeviceAlert]);
@@ -390,6 +455,7 @@ function App() {
 
     refreshRef.current();
     fetchCmdLog();
+    hydrateAlerts();
 
     const refreshId = setInterval(() => refreshRef.current(), 30_000);
     const cmdId = setInterval(fetchCmdLog, 120_000);
@@ -425,12 +491,13 @@ function App() {
       clearTimeout(reconnectTimer);
       ws?.close();
     };
-  }, [screen, fetchCmdLog, setStatus]);
+  }, [screen, fetchCmdLog, setStatus, hydrateAlerts]);
 
   // ── Logout ────────────────────────────────────────────────────────────
   const doLogout = React.useCallback(() => {
     localStorage.removeItem('tracer_token');
     localStorage.removeItem('tracer_username');
+    localStorage.removeItem(NOTIF_STORAGE_KEY);
     setDevice(null);
     setStatusOnline(null);
     setCmdLog([]);
