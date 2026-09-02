@@ -280,6 +280,18 @@ func initDatabase() {
 			enabled     INTEGER NOT NULL DEFAULT 1,
 			last_inside INTEGER NOT NULL DEFAULT 1
 		)`,
+		`CREATE TABLE IF NOT EXISTS alerts (
+			id          INTEGER PRIMARY KEY AUTOINCREMENT,
+			type        TEXT NOT NULL,
+			message     TEXT NOT NULL DEFAULT '',
+			lat         REAL,
+			lon         REAL,
+			battery     INTEGER,
+			signal      INTEGER,
+			device_id   TEXT NOT NULL DEFAULT '',
+			attempt_num INTEGER,
+			created_at  TEXT NOT NULL
+		)`,
 	}
 	for _, s := range stmts {
 		if _, err := db.Exec(s); err != nil {
@@ -876,7 +888,20 @@ func postDeviceAlert(c *fiber.Ctx) error {
 	}
 	ts := time.Now().UTC().Format(time.RFC3339)
 	log.Printf("alert: %s — %s", payload.Type, payload.Message)
+
+	res, err := db.Exec(
+		`INSERT INTO alerts (type, message, lat, lon, battery, signal, device_id, attempt_num, created_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		payload.Type, payload.Message, payload.Lat, payload.Lon, payload.Battery,
+		payload.Signal, payload.DeviceID, payload.AttemptNum, ts,
+	)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "database error"})
+	}
+	id, _ := res.LastInsertId()
+
 	go broadcast("alert", fiber.Map{
+		"id":          id,
 		"type":        payload.Type,
 		"message":     payload.Message,
 		"timestamp":   ts,
@@ -888,6 +913,57 @@ func postDeviceAlert(c *fiber.Ctx) error {
 		"attempt_num": payload.AttemptNum,
 	})
 	return c.SendStatus(fiber.StatusOK)
+}
+
+// getAlertHistory: alertas persistidas, más recientes primero. Para que el
+// panel web pueda recuperarlas aunque no estuviera abierto cuando llegaron.
+func getAlertHistory(c *fiber.Ctx) error {
+	limit := c.QueryInt("limit", 30)
+	if limit < 1 {
+		limit = 1
+	}
+	if limit > 200 {
+		limit = 200
+	}
+	rows, err := db.Query(`
+		SELECT id, type, message, lat, lon, battery, signal, device_id, attempt_num, created_at
+		FROM alerts ORDER BY id DESC LIMIT ?
+	`, limit)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "database error"})
+	}
+	defer rows.Close()
+
+	alerts := make([]fiber.Map, 0)
+	for rows.Next() {
+		var (
+			id                           int64
+			aType, message, deviceID, ts string
+			lat, lon                     sql.NullFloat64
+			battery, signal, attemptNum  sql.NullInt64
+		)
+		if err := rows.Scan(&id, &aType, &message, &lat, &lon, &battery, &signal, &deviceID, &attemptNum, &ts); err != nil {
+			continue
+		}
+		m := fiber.Map{"id": id, "type": aType, "message": message, "device_id": deviceID, "timestamp": ts}
+		if lat.Valid {
+			m["lat"] = lat.Float64
+		}
+		if lon.Valid {
+			m["lon"] = lon.Float64
+		}
+		if battery.Valid {
+			m["battery"] = battery.Int64
+		}
+		if signal.Valid {
+			m["signal"] = signal.Int64
+		}
+		if attemptNum.Valid {
+			m["attempt_num"] = attemptNum.Int64
+		}
+		alerts = append(alerts, m)
+	}
+	return c.JSON(alerts)
 }
 
 func getPhotoFile(c *fiber.Ctx) error {
@@ -994,6 +1070,7 @@ func main() {
 	api.Delete("/geofence", deleteGeofence)
 
 	api.Post("/alert", postDeviceAlert)
+	api.Get("/alert/history", getAlertHistory)
 
 	log.Fatal(app.Listen(":" + cfg.Port))
 }
