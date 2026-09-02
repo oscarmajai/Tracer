@@ -395,61 +395,167 @@ function MessageModal({ open, device, onClose, onConfirm }) {
   );
 }
 
-function GeofenceModal({ open, device, onClose, onConfirm }) {
-  const [radius, setRadius] = React.useState(200);
-  const [name, setName] = React.useState('Casa');
-  const [trigger, setTrigger] = React.useState('exit');
-  if (!device) return null;
+const GEOFENCE_ACCENT = '#2563EB';
+
+// Editor real de geocerca: mapa Leaflet, centro arrastrable, radio ajustable.
+// Se monta solo cuando el modal está abierto (Modal devuelve null si !open).
+function GeofenceEditor({ device, onClose, onConfirm, onDelete }) {
+  const mapDivRef = React.useRef(null);
+  const mapRef = React.useRef(null);
+  const circleRef = React.useRef(null);
+  const markerRef = React.useRef(null);
+
+  const [radius, setRadius] = React.useState(300);
+  const [center, setCenter] = React.useState({
+    lat: device.lat || 19.4284,
+    lon: device.lon || -99.1660,
+  });
+  const [existing, setExisting] = React.useState(false);
+  const [busy, setBusy] = React.useState(false);
+  const [err, setErr] = React.useState('');
+
+  // Cargar geocerca existente para precargar el editor
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const gf = await window.tracerApiFetch('/api/geofence');
+        if (!cancelled && gf && typeof gf.lat === 'number') {
+          setCenter({ lat: gf.lat, lon: gf.lon });
+          setRadius(Math.round(gf.radius) || 300);
+          setExisting(true);
+        }
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Inicializar Leaflet
+  React.useEffect(() => {
+    if (!mapDivRef.current || mapRef.current || typeof L === 'undefined') return;
+    const map = L.map(mapDivRef.current, { zoomControl: true, attributionControl: false })
+      .setView([center.lat, center.lon], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+    const circle = L.circle([center.lat, center.lon], {
+      radius, color: GEOFENCE_ACCENT, weight: 2, fillOpacity: 0.12,
+    }).addTo(map);
+    const marker = L.marker([center.lat, center.lon], { draggable: true }).addTo(map);
+
+    marker.on('drag', () => circle.setLatLng(marker.getLatLng()));
+    marker.on('dragend', () => {
+      const p = marker.getLatLng();
+      setCenter({ lat: p.lat, lon: p.lng });
+    });
+    map.on('click', (e) => {
+      marker.setLatLng(e.latlng);
+      circle.setLatLng(e.latlng);
+      setCenter({ lat: e.latlng.lat, lon: e.latlng.lng });
+    });
+
+    mapRef.current = map;
+    circleRef.current = circle;
+    markerRef.current = marker;
+    // El modal aparece con animación: recalcular tamaño cuando ya es visible
+    setTimeout(() => map.invalidateSize(), 150);
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+      circleRef.current = null;
+      markerRef.current = null;
+    };
+  }, []);
+
+  // Reflejar cambios de estado (radio, centro cargado del backend) en el mapa
+  React.useEffect(() => {
+    if (circleRef.current) circleRef.current.setRadius(radius);
+  }, [radius]);
+  React.useEffect(() => {
+    if (!mapRef.current) return;
+    const ll = [center.lat, center.lon];
+    circleRef.current && circleRef.current.setLatLng(ll);
+    markerRef.current && markerRef.current.setLatLng(ll);
+    mapRef.current.setView(ll);
+  }, [center]);
+
+  const save = async () => {
+    setBusy(true);
+    setErr('');
+    try {
+      await onConfirm({ lat: center.lat, lon: center.lon, radius, enabled: true });
+    } catch {
+      setErr('No se pudo guardar la geocerca. Reintentá.');
+      setBusy(false);
+    }
+  };
+
+  const remove = async () => {
+    setBusy(true);
+    setErr('');
+    try {
+      await onDelete();
+    } catch {
+      setErr('No se pudo eliminar la geocerca.');
+      setBusy(false);
+    }
+  };
+
   return (
-    <Modal open={open} onClose={onClose} size="lg">
+    <>
       <header className="modal-head">
         <div className="modal-eyebrow">Localización · Geocerca</div>
-        <h3>Crear perímetro de seguridad</h3>
+        <h3>{existing ? 'Editar' : 'Crear'} perímetro de seguridad</h3>
         <button className="modal-close" onClick={onClose}><IconClose width={14} height={14} /></button>
       </header>
       <div className="modal-body">
         <p className="modal-lead">
-          Recibe una alerta cuando {device.name} entre o salga de una zona específica.
+          Tocá el mapa o arrastrá el marcador para fijar el centro. Recibirás una
+          alerta cuando {device.name} salga de la zona.
         </p>
 
         <div className="geofence-preview">
-          <div className="geofence-map">
-            <TracerMap />
-            <svg className="geofence-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
-              <circle cx="520" cy="480" r={radius / 0.6} fill="var(--accent)" fillOpacity="0.10" stroke="var(--accent)" strokeWidth="2" strokeDasharray="6 4" />
-              <circle cx="520" cy="480" r="8" fill="#fff" stroke="var(--accent)" strokeWidth="2" />
-            </svg>
-          </div>
+          <div ref={mapDivRef} className="geofence-map" style={{ height: 260 }} />
         </div>
 
-        <div className="form-grid form-grid-2">
-          <label className="form-field">
-            <span>Nombre de la zona</span>
-            <input value={name} onChange={(e) => setName(e.target.value)} />
-          </label>
+        <div className="form-grid form-grid-2" style={{ marginTop: 12 }}>
           <div className="form-field">
             <span>Radio: <span className="mono">{radius} m</span></span>
-            <input type="range" min="50" max="500" step="10"
+            <input type="range" min="100" max="2000" step="50"
                    value={radius} onChange={(e) => setRadius(+e.target.value)}
                    className="range" />
           </div>
-        </div>
-
-        <div className="form-field" style={{ marginTop: 12 }}>
-          <span>Alertarme cuando</span>
-          <div className="seg seg-full">
-            <button className={`seg-btn ${trigger === 'exit' ? 'is-on' : ''}`} onClick={() => setTrigger('exit')}>Salga</button>
-            <button className={`seg-btn ${trigger === 'enter' ? 'is-on' : ''}`} onClick={() => setTrigger('enter')}>Entre</button>
-            <button className={`seg-btn ${trigger === 'both' ? 'is-on' : ''}`} onClick={() => setTrigger('both')}>Ambos</button>
+          <div className="form-field">
+            <span>Centro</span>
+            <span className="mono" style={{ fontSize: 12 }}>
+              {center.lat.toFixed(5)}, {center.lon.toFixed(5)}
+            </span>
           </div>
         </div>
+
+        {err && <div className="modal-error" style={{ color: 'var(--danger, #dc2626)', fontSize: 13, marginTop: 8 }}>{err}</div>}
       </div>
       <footer className="modal-foot">
-        <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
-        <button className="btn btn-primary" onClick={() => onConfirm(name, radius)}>
-          <IconGeofence width={14} height={14} /> Crear geocerca
+        {existing && (
+          <button className="btn btn-ghost" onClick={remove} disabled={busy}
+                  style={{ marginRight: 'auto', color: 'var(--danger, #dc2626)' }}>
+            Eliminar
+          </button>
+        )}
+        <button className="btn btn-ghost" onClick={onClose} disabled={busy}>Cancelar</button>
+        <button className="btn btn-primary" onClick={save} disabled={busy}>
+          <IconGeofence width={14} height={14} /> {existing ? 'Guardar' : 'Crear geocerca'}
         </button>
       </footer>
+    </>
+  );
+}
+
+function GeofenceModal({ open, device, onClose, onConfirm, onDelete }) {
+  if (!device) return null;
+  return (
+    <Modal open={open} onClose={onClose} size="lg">
+      <GeofenceEditor device={device} onClose={onClose} onConfirm={onConfirm} onDelete={onDelete} />
     </Modal>
   );
 }

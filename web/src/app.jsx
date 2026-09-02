@@ -642,6 +642,24 @@ function App() {
     }
   }, [modalDevice, sendCmd, fireToast, fetchCmdLog]);
 
+  // Geocerca: va a los endpoints REST /api/geofence, no al flujo de comandos.
+  const confirmGeofence = React.useCallback(async (geo) => {
+    await tracerApiFetch('/api/geofence', { method: 'POST', body: JSON.stringify(geo) });
+    fireToast('geofence', modalDevice);
+    addNotification({
+      type: 'security',
+      title: 'Geocerca configurada',
+      detail: `Centro ${geo.lat.toFixed(4)}, ${geo.lon.toFixed(4)} · radio ${geo.radius} m`,
+    });
+    setModal(null);
+  }, [modalDevice, fireToast, addNotification]);
+
+  const deleteGeofence = React.useCallback(async () => {
+    await tracerApiFetch('/api/geofence', { method: 'DELETE' });
+    addNotification({ type: 'system', title: 'Geocerca eliminada', detail: '' });
+    setModal(null);
+  }, [addNotification]);
+
   const confirmCallback = React.useCallback(async (phone) => {
     const dev = modalDevice;
     setModal(null);
@@ -730,7 +748,7 @@ function App() {
       <MessageModal open={modal?.kind === 'message'} device={modalDevice}
         onClose={closeModal} onConfirm={(text) => confirmGeneric('message', text)} />
       <GeofenceModal open={modal?.kind === 'geofence'} device={modalDevice}
-        onClose={closeModal} onConfirm={(name, radius) => confirmGeneric('geofence', `${name}|${radius}`)} />
+        onClose={closeModal} onConfirm={confirmGeofence} onDelete={deleteGeofence} />
 
       <SimpleConfirmModal kind="flash" open={modal?.kind === 'flash'} device={modalDevice}
         onClose={closeModal} onConfirm={() => confirmGeneric('flash', '')} />
