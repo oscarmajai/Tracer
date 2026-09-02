@@ -17,16 +17,35 @@ function persistSettings(token, username) {
 
 async function apiFetch(path, options = {}) {
   const { apiUrl, apiToken } = getSettings();
-  const res = await fetch(`${apiUrl}${path}`, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${apiToken}`,
-      'Content-Type': 'application/json',
-      ...(options.headers || {}),
-    },
-  });
+  let res;
+  try {
+    res = await fetch(`${apiUrl}${path}`, {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${apiToken}`,
+        'Content-Type': 'application/json',
+        ...(options.headers || {}),
+      },
+    });
+  } catch (e) {
+    const err = new Error('No se pudo contactar al servidor');
+    err.kind = 'network';
+    throw err;
+  }
+  if (res.status === 401) {
+    // Token inválido/expirado: limpiar y avisar a la app para volver al login.
+    localStorage.removeItem('tracer_token');
+    window.dispatchEvent(new CustomEvent('tracer:unauthorized'));
+    const err = new Error('Sesión expirada');
+    err.kind = 'unauthorized';
+    throw err;
+  }
   if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) {
+    const err = new Error(`Error del servidor (${res.status})`);
+    err.kind = 'http';
+    throw err;
+  }
   if (res.status === 204) return null;
   return res.json();
 }
