@@ -67,7 +67,7 @@ function PhotoModal({ open, device, onClose, onConfirm }) {
   const start = async () => {
     setSince(Date.now());
     setStage('waiting');
-    try { await onConfirm(); } catch {}
+    try { await onConfirm(); } catch { setStage('config'); }
   };
 
   return (
@@ -147,7 +147,7 @@ function AudioModal({ open, device, onClose, onConfirm }) {
   const start = async () => {
     setSince(Date.now());
     setStage('waiting');
-    try { await onConfirm(String(duration)); } catch {}
+    try { await onConfirm(String(duration)); } catch { setStage('config'); }
   };
 
   return (
@@ -236,7 +236,7 @@ function ScreenshotModal({ open, device, onClose, onConfirm }) {
   const start = async () => {
     setSince(Date.now());
     setStage('waiting');
-    try { await onConfirm(); } catch {}
+    try { await onConfirm(); } catch { setStage('config'); }
   };
 
   return (
@@ -297,7 +297,7 @@ function SilentCallModal({ open, device, onClose, onConfirm }) {
   const start = async () => {
     setSince(Date.now());
     setStage('waiting');
-    try { await onConfirm(); } catch {}
+    try { await onConfirm(); } catch { setStage('config'); }
   };
 
   return (

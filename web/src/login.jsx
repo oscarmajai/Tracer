@@ -21,19 +21,27 @@ function LoginScreen({ onLogin }) {
       if (res.status === 401) {
         localStorage.removeItem('tracer_token');
         setStage('idle');
+        setError('Tu sesión expiró. Volvé a iniciar sesión.');
         setTimeout(() => setShowHint(true), 1200);
-      } else {
+      } else if (res.ok || res.status === 404) {
+        // 404 = sin ubicaciones aún, pero el token es válido
         setStage('granted');
         setTimeout(onLogin, 400);
+      } else {
+        setStage('idle');
+        setError(`El servidor respondió ${res.status}. Reintentá.`);
       }
     }).catch(() => {
-      setStage('granted');
-      setTimeout(onLogin, 400);
+      // Sin conexión: NO entrar con un token sin verificar.
+      setStage('idle');
+      setError('No se pudo contactar al servidor. Verificá tu conexión y reintentá.');
+      setTimeout(() => setShowHint(true), 800);
     });
   }, []);
 
   const clearError = () => {
-    if (stage === 'error') { setStage('idle'); setError(''); }
+    if (error) setError('');
+    if (stage === 'error') setStage('idle');
   };
 
   const submit = async (e) => {

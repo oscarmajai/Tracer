@@ -256,6 +256,31 @@ function App() {
     } catch {}
   }, []);
 
+  // Deriva el estado real de los toggles (alert/keyguard/flash/vibrate) a
+  // partir del historial de comandos (más reciente primero).
+  const syncTogglesFromHistory = React.useCallback((history) => {
+    const lastOf = (...names) => history.find(c => names.includes(c.command));
+    const recent = (c) => c && (Date.now() - new Date(c.created_at).getTime()) < 70_000;
+
+    const alertCmd = lastOf('ALERT_ON', 'ALERT_OFF');
+    if (alertCmd) {
+      const on = alertCmd.command === 'ALERT_ON';
+      setAlertActive(on); alertActiveRef.current = on;
+    }
+    const kgCmd = lastOf('KEYGUARD_ON', 'KEYGUARD_OFF');
+    if (kgCmd) {
+      const on = kgCmd.command === 'KEYGUARD_ON';
+      setKeyguardActive(on); keyguardActiveRef.current = on;
+    }
+    const flashCmd = lastOf('FLASH', 'FLASH_STOP');
+    const flashOn = !!flashCmd && flashCmd.command === 'FLASH' && recent(flashCmd);
+    setFlashActive(flashOn); flashActiveRef.current = flashOn;
+
+    const vibCmd = lastOf('VIBRATE', 'VIBRATE_STOP');
+    const vibOn = !!vibCmd && vibCmd.command === 'VIBRATE' && recent(vibCmd);
+    setVibrateActive(vibOn); vibrateActiveRef.current = vibOn;
+  }, []);
+
   // ── Fetch command log ─────────────────────────────────────────────────
   const fetchCmdLog = React.useCallback(async () => {
     try {
@@ -265,9 +290,10 @@ function App() {
           ...cmd,
           ts: tracerFormatHistoryTime(cmd.created_at),
         })));
+        syncTogglesFromHistory(history);
       }
     } catch {}
-  }, []);
+  }, [syncTogglesFromHistory]);
 
   // ── Send command to backend ───────────────────────────────────────────
   const sendCmd = React.useCallback(async (command, args = '') => {
@@ -492,11 +518,37 @@ function App() {
     setScreen('login');
   }, []);
 
+  // Sesión expirada (401 desde tracerApiFetch): volver al login sin borrar
+  // el usuario, para que solo tenga que reingresar la contraseña.
+  React.useEffect(() => {
+    const onUnauthorized = () => {
+      setDevice(null);
+      setStatusOnline(null);
+      setCmdLog([]);
+      setHistoryItems([]);
+      setModal(null);
+      setScreen('login');
+      setToast({ tone: 'warn', title: 'Sesión expirada', detail: 'Volvé a iniciar sesión.' });
+    };
+    window.addEventListener('tracer:unauthorized', onUnauthorized);
+    return () => window.removeEventListener('tracer:unauthorized', onUnauthorized);
+  }, []);
+
   // ── Toast helper ──────────────────────────────────────────────────────
   const fireToast = React.useCallback((kind, dev) => {
     const cfg = COMMAND_TOASTS[kind];
     if (!cfg || !dev) return;
     setToast({ tone: cfg.tone, title: cfg.title(dev), detail: cfg.detail });
+  }, []);
+
+  // Toast de error para comandos que no se pudieron enviar.
+  const fireCmdError = React.useCallback((err) => {
+    if (err && err.kind === 'unauthorized') return; // ya lo maneja el listener
+    setToast({
+      tone: 'danger',
+      title: 'No se pudo enviar el comando',
+      detail: (err && err.message) || 'Reintentá en unos segundos.',
+    });
   }, []);
 
   // ── Modal helpers ─────────────────────────────────────────────────────
@@ -516,9 +568,10 @@ function App() {
         const next = !alertActiveRef.current;
         setAlertActive(next);
         alertActiveRef.current = next;
-        sendCmd(next ? 'ALERT_ON' : 'ALERT_OFF').then(() => fetchCmdLog()).catch(() => {
+        sendCmd(next ? 'ALERT_ON' : 'ALERT_OFF').then(() => fetchCmdLog()).catch((e) => {
           setAlertActive(!next);
           alertActiveRef.current = !next;
+          fireCmdError(e);
         });
         if (dev) fireToast(next ? 'alert_on' : 'alert_off', dev);
         return;
@@ -528,9 +581,10 @@ function App() {
         const next = !keyguardActiveRef.current;
         setKeyguardActive(next);
         keyguardActiveRef.current = next;
-        sendCmd(next ? 'KEYGUARD_ON' : 'KEYGUARD_OFF').then(() => fetchCmdLog()).catch(() => {
+        sendCmd(next ? 'KEYGUARD_ON' : 'KEYGUARD_OFF').then(() => fetchCmdLog()).catch((e) => {
           setKeyguardActive(!next);
           keyguardActiveRef.current = !next;
+          fireCmdError(e);
         });
         if (dev) fireToast(next ? 'keyguard_on' : 'keyguard_off', dev);
         return;
@@ -540,7 +594,7 @@ function App() {
         if (flashActiveRef.current) {
           setFlashActive(false);
           flashActiveRef.current = false;
-          sendCmd('FLASH_STOP').then(() => fetchCmdLog()).catch(() => {});
+          sendCmd('FLASH_STOP').then(() => fetchCmdLog()).catch(fireCmdError);
           return;
         }
         break;
@@ -549,7 +603,7 @@ function App() {
         if (vibrateActiveRef.current) {
           setVibrateActive(false);
           vibrateActiveRef.current = false;
-          sendCmd('VIBRATE_STOP').then(() => fetchCmdLog()).catch(() => {});
+          sendCmd('VIBRATE_STOP').then(() => fetchCmdLog()).catch(fireCmdError);
           return;
         }
         break;
@@ -558,30 +612,32 @@ function App() {
         break;
     }
     setModal({ kind, deviceId });
-  }, [sendCmd, fetchCmdLog, fireToast]);
+  }, [sendCmd, fetchCmdLog, fireToast, fireCmdError]);
 
   // ── Command confirmations ─────────────────────────────────────────────
   const confirmRing = React.useCallback(async () => {
     const dev = modalDevice;
-    setRingingId(dev?.id || null);
-    setTimeout(() => {
-      setRingingId(null);
-      sendCmd('RING_STOP').catch(() => {});
-    }, 6000);
-    setTimeout(() => setModal(null), 6000);
     try {
       await sendCmd('RING');
       fireToast('ring', dev);
       fetchCmdLog();
-    } catch {}
-  }, [modalDevice, sendCmd, fireToast, fetchCmdLog]);
+      setRingingId(dev?.id || null);
+      setTimeout(() => {
+        setRingingId(null);
+        sendCmd('RING_STOP').catch(() => {});
+      }, 6000);
+      setTimeout(() => setModal(null), 6000);
+    } catch (e) {
+      fireCmdError(e);
+    }
+  }, [modalDevice, sendCmd, fireToast, fetchCmdLog, fireCmdError]);
 
   const confirmLost = React.useCallback(async (message, phone) => {
     const dev = modalDevice;
-    setModal(null);
     const args = [message, phone].filter(Boolean).join('|');
     try {
       await sendCmd('LOCK', args);
+      setModal(null);
       fireToast('lost', dev);
       fetchCmdLog();
       addNotification({
@@ -589,51 +645,63 @@ function App() {
         title: `Modo perdido activado en ${dev?.name || 'dispositivo'}`,
         detail: 'El dispositivo se bloqueará al conectarse.',
       });
-    } catch {}
-  }, [modalDevice, sendCmd, fireToast, fetchCmdLog, addNotification]);
+    } catch (e) {
+      fireCmdError(e);
+    }
+  }, [modalDevice, sendCmd, fireToast, fetchCmdLog, addNotification, fireCmdError]);
 
   const confirmWipe = React.useCallback(async () => {
     const dev = modalDevice;
-    setModal(null);
     try {
       await sendCmd('WIPE', 'CONFIRM');
+      setModal(null);
       fireToast('wipe', dev);
       fetchCmdLog();
-    } catch {}
-  }, [modalDevice, sendCmd, fireToast, fetchCmdLog]);
+    } catch (e) {
+      fireCmdError(e);
+    }
+  }, [modalDevice, sendCmd, fireToast, fetchCmdLog, fireCmdError]);
 
   const confirmGeneric = React.useCallback(async (kind, detail) => {
     const dev = modalDevice;
-    setModal(null);
     const command = KIND_TO_CMD[kind];
-    if (command) {
-      try {
-        await sendCmd(command, detail || '');
-        fireToast(kind, dev);
-        fetchCmdLog();
-        // Activar estado visual para comandos con duración y auto-reset a los 65s
-        if (kind === 'flash') {
-          setFlashActive(true);
-          flashActiveRef.current = true;
-          setTimeout(() => { setFlashActive(false); flashActiveRef.current = false; }, 65_000);
-        }
-        if (kind === 'vibrate') {
-          setVibrateActive(true);
-          vibrateActiveRef.current = true;
-          setTimeout(() => { setVibrateActive(false); vibrateActiveRef.current = false; }, 65_000);
-        }
-      } catch {}
-    } else {
+    if (!command) {
+      setModal(null);
       fireToast(kind, dev);
+      return;
     }
-  }, [modalDevice, sendCmd, fireToast, fetchCmdLog]);
+    try {
+      await sendCmd(command, detail || '');
+      setModal(null);
+      fireToast(kind, dev);
+      fetchCmdLog();
+      // Estado visual para comandos con duración, auto-reset a los 65s
+      if (kind === 'flash') {
+        setFlashActive(true);
+        flashActiveRef.current = true;
+        setTimeout(() => { setFlashActive(false); flashActiveRef.current = false; }, 65_000);
+      }
+      if (kind === 'vibrate') {
+        setVibrateActive(true);
+        vibrateActiveRef.current = true;
+        setTimeout(() => { setVibrateActive(false); vibrateActiveRef.current = false; }, 65_000);
+      }
+    } catch (e) {
+      fireCmdError(e);
+    }
+  }, [modalDevice, sendCmd, fireToast, fetchCmdLog, fireCmdError]);
 
   // Comandos de captura (foto/audio/pantalla/llamada): envían el comando y
   // dejan el modal abierto para mostrar el resultado real cuando llega.
   const sendCaptureCmd = React.useCallback(async (command, args = '') => {
-    await sendCmd(command, args);
-    fetchCmdLog();
-  }, [sendCmd, fetchCmdLog]);
+    try {
+      await sendCmd(command, args);
+      fetchCmdLog();
+    } catch (e) {
+      fireCmdError(e);
+      throw e;
+    }
+  }, [sendCmd, fetchCmdLog, fireCmdError]);
 
   // Geocerca: va a los endpoints REST /api/geofence, no al flujo de comandos.
   const confirmGeofence = React.useCallback(async (geo) => {
@@ -655,13 +723,15 @@ function App() {
 
   const confirmCallback = React.useCallback(async (phone) => {
     const dev = modalDevice;
-    setModal(null);
     try {
       await sendCmd('CALLBACK', phone || '');
+      setModal(null);
       fireToast('callback', dev);
       fetchCmdLog();
-    } catch {}
-  }, [modalDevice, sendCmd, fireToast, fetchCmdLog]);
+    } catch (e) {
+      fireCmdError(e);
+    }
+  }, [modalDevice, sendCmd, fireToast, fetchCmdLog, fireCmdError]);
 
   // ── Render ────────────────────────────────────────────────────────────
   if (screen === 'login') {
