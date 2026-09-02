@@ -35,10 +35,14 @@ class TracerDeviceAdminReceiver : DeviceAdminReceiver() {
             action = TracerLocationService.ACTION_PIN_FAIL_PHOTO
             putExtra(TracerLocationService.EXTRA_ATTEMPT_NUM, attemptNum)
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(intent)
-        } else {
-            context.startService(intent)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "No se pudo arrancar el servicio para foto de PIN fallido: ${e.message}")
         }
         Log.w(TAG, "PIN fail #$attemptNum — triggering photo")
     }
