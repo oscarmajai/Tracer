@@ -27,9 +27,11 @@ COPY web/ ./web/
 
 EXPOSE 3000
 
-ENV TRACER_API_TOKEN=TracerSecretToken123 \
-    TRACER_DB_FILE=/data/telemetry.db \
+# Los secretos (TRACER_API_TOKEN, TRACER_USERNAME, TRACER_PASSWORD) se inyectan
+# en runtime vía docker-compose / entorno. Nunca se hornean en la imagen.
+ENV TRACER_DB_FILE=/data/telemetry.db \
     TRACER_PHOTOS_DIR=/data/photos \
+    TRACER_AUDIO_DIR=/data/audio \
     PORT=3000
 
 CMD ["./tracer-api"]

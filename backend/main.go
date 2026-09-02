@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -39,14 +40,15 @@ var (
 )
 
 func loadConfig() Config {
+	loadDotEnv(".env", "../.env")
 	return Config{
-		APIToken:  getEnv("TRACER_API_TOKEN", "TracerSecretToken123"),
+		APIToken:  mustEnv("TRACER_API_TOKEN"),
 		DBFile:    getEnv("TRACER_DB_FILE", "./telemetry.db"),
 		PhotosDir: getEnv("TRACER_PHOTOS_DIR", "./photos"),
 		AudioDir:  getEnv("TRACER_AUDIO_DIR", "./audio"),
 		Port:      getEnv("PORT", "3000"),
-		Username:  getEnv("TRACER_USERNAME", "admin"),
-		Password:  getEnv("TRACER_PASSWORD", "tracer1234"),
+		Username:  mustEnv("TRACER_USERNAME"),
+		Password:  mustEnv("TRACER_PASSWORD"),
 	}
 }
 
@@ -55,6 +57,51 @@ func getEnv(key, def string) string {
 		return v
 	}
 	return def
+}
+
+// mustEnv devuelve la variable de entorno o aborta si falta/está vacía.
+// Se usa para secretos: nunca hay valor por defecto.
+func mustEnv(key string) string {
+	v := strings.TrimSpace(os.Getenv(key))
+	if v == "" {
+		log.Fatalf("falta la variable de entorno obligatoria %s (definila en .env o en el entorno)", key)
+	}
+	return v
+}
+
+// loadDotEnv carga el primer archivo .env que exista de la lista, sin pisar
+// variables que ya estén definidas en el entorno. Formato: KEY=VALUE por línea,
+// admite comentarios con # y comillas simples/dobles alrededor del valor.
+func loadDotEnv(paths ...string) {
+	for _, path := range paths {
+		f, err := os.Open(path)
+		if err != nil {
+			continue
+		}
+		scanner := bufio.NewScanner(f)
+		for scanner.Scan() {
+			line := strings.TrimSpace(scanner.Text())
+			if line == "" || strings.HasPrefix(line, "#") {
+				continue
+			}
+			key, val, ok := strings.Cut(line, "=")
+			if !ok {
+				continue
+			}
+			key = strings.TrimSpace(key)
+			val = strings.TrimSpace(val)
+			val = strings.Trim(val, `"'`)
+			if key == "" {
+				continue
+			}
+			if _, exists := os.LookupEnv(key); !exists {
+				_ = os.Setenv(key, val)
+			}
+		}
+		f.Close()
+		log.Printf("config: cargado %s", path)
+		return
+	}
 }
 
 // ── WebSocket Hub ─────────────────────────────────────────────────────────────
@@ -193,7 +240,7 @@ type AlertPayload struct {
 	AttemptNum *int     `json:"attempt_num,omitempty"`
 }
 
-var validFilename      = regexp.MustCompile(`^[a-zA-Z0-9_.\-]+\.jpg$`)
+var validFilename = regexp.MustCompile(`^[a-zA-Z0-9_.\-]+\.jpg$`)
 var validAudioFilename = regexp.MustCompile(`^[a-zA-Z0-9_.\-]+\.m4a$`)
 
 // ── Database ──────────────────────────────────────────────────────────────────
