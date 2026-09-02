@@ -1,3 +1,36 @@
+# IDE
 .idea
-**/local.properties
+*.iml
+.vscode
+
+# Secretos y config local
 .env
+**/local.properties
+
+# Android
+app/build/
+app/.gradle/
+.gradle/
+build/
+*.apk
+*.ap_
+*.dex
+local.properties
+
+# Go / backend
+backend/tracer-backend
+tracer-backend
+*.test
+*.out
+
+# Datos en runtime
+*.db
+*.db-shm
+*.db-wal
+telemetry.db*
+backend/photos/
+backend/audio/
+
+# SO
+.DS_Store
+Thumbs.db

@@ -1,3 +1,16 @@
+**/.git
+.env
+.gitignore
+
+# Android: no forma parte de la imagen del backend
+app/
+
+# Artefactos y datos
 web/node_modules
 web/dist
-**/.git
+**/*.db
+**/*.db-shm
+**/*.db-wal
+backend/tracer-backend
+backend/photos/
+backend/audio/
