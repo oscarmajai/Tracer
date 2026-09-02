@@ -104,6 +104,8 @@ Toggles (no en el mapa anterior): `alert→ALERT_ON/ALERT_OFF · keyguard→KEYG
 
 La **geocerca no es un comando**: la web la gestiona con `GET/POST/DELETE /api/geofence` (estado en el backend, evaluación en `checkGeofence`). El dispositivo solo recibe el `GEO_BREACH` resultante.
 
+`RESET_PIN` y `BLOCK_APPS` requieren que Tracer sea **Device Owner** (`adb shell dpm set-device-owner com.tracer.app/.admin.TracerDeviceAdminReceiver`, solo en un teléfono sin cuentas configuradas). Con Device Admin normal responden con un mensaje de error explicándolo; la web lo avisa en el modal. `ENABLE_WIFI`/`ENABLE_DATA` son no-ops en Android 10+ (limitación de plataforma).
+
 ## Base de datos
 
 - **SQLite** (`mattn/go-sqlite3`, CGO), archivo `TRACER_DB_FILE` (por defecto `./telemetry.db`, en Docker `/data/telemetry.db`).

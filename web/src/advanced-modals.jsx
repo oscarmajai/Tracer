@@ -560,8 +560,8 @@ function SimpleConfirmModal({ open, device, onClose, onConfirm, kind }) {
     vibrate: { eyebrow: 'Localización · Vibración', title: 'Hacer vibrar', body: 'Vibrará en intervalos cortos durante 60 segundos, aún en modo silencio.', cta: 'Iniciar vibración', Icon: IconVibrate },
     stealth: { eyebrow: 'Avanzado · Modo sigilo', title: 'Activar modo sigilo', body: 'Oculta el ícono de Tracer, desactiva notificaciones visibles y registra todo en segundo plano sin alertar a quien tenga el dispositivo.', cta: 'Activar sigilo', Icon: IconStealth },
     gps: { eyebrow: 'Localización · GPS de precisión', title: 'Forzar GPS de alta precisión', body: 'Activa simultáneamente GPS, Wi-Fi, Bluetooth y triangulación celular. Consume batería rápidamente.', cta: 'Activar precisión', Icon: IconBoltGPS },
-    key: { eyebrow: 'Seguridad · Cambiar contraseña', title: 'Cambiar contraseña remotamente', body: 'Genera una nueva contraseña aleatoria de 12 caracteres y la aplica al dispositivo. La verás solo aquí.', cta: 'Generar y aplicar', Icon: IconKey },
-    apps: { eyebrow: 'Seguridad · Bloquear apps', title: 'Bloquear apps sensibles', body: 'Bloquea inmediatamente apps de banca, correo, mensajería y redes sociales. Solo se desbloquean con tu contraseña maestra.', cta: 'Bloquear apps', Icon: IconAppBlock },
+    key: { eyebrow: 'Seguridad · Cambiar contraseña', title: 'Cambiar contraseña remotamente', body: 'Genera una nueva contraseña aleatoria y la aplica al dispositivo. La verás solo aquí.', cta: 'Generar y aplicar', Icon: IconKey, needsDeviceOwner: true },
+    apps: { eyebrow: 'Seguridad · Bloquear apps', title: 'Bloquear apps sensibles', body: 'Bloquea apps de banca, correo, mensajería y redes sociales. Solo se desbloquean con tu contraseña maestra.', cta: 'Bloquear apps', Icon: IconAppBlock, needsDeviceOwner: true },
   };
   const c = conf[kind];
   if (!device || !c) return null;
@@ -578,6 +578,13 @@ function SimpleConfirmModal({ open, device, onClose, onConfirm, kind }) {
           <div className="simple-confirm-icon"><Icon width={22} height={22} /></div>
           <p className="modal-lead" style={{ margin: 0 }}>{c.body}</p>
         </div>
+        {c.needsDeviceOwner && (
+          <p className="modal-lead" style={{ fontSize: 12, marginTop: 12, opacity: 0.75 }}>
+            Requiere que Tracer sea <strong>Device Owner</strong> del teléfono
+            (<code>adb shell dpm set-device-owner com.tracer.app/.admin.TracerDeviceAdminReceiver</code>).
+            Si no lo es, el comando fallará y el motivo aparecerá en Actividad.
+          </p>
+        )}
       </div>
       <footer className="modal-foot">
         <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
