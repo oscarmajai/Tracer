@@ -11,6 +11,7 @@ services:
       - TRACER_API_TOKEN=${TRACER_API_TOKEN}
       - TRACER_DB_FILE=/data/telemetry.db
       - TRACER_PHOTOS_DIR=/data/photos
+      - TRACER_AUDIO_DIR=/data/audio
       - PORT=3000
     volumes:
       - tracer-data:/data
