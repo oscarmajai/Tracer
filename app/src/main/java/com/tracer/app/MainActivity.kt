@@ -37,6 +37,7 @@ class MainActivity : ComponentActivity() {
 
     private val adminComponent by lazy { ComponentName(this, TracerDeviceAdminReceiver::class.java) }
     private val dpm            by lazy { getSystemService(DevicePolicyManager::class.java) }
+    private val config         by lazy { getSharedPreferences("tracer_config", MODE_PRIVATE) }
 
     // ── Cadena de permisos ────────────────────────────────────────────────────
 
@@ -159,6 +160,41 @@ class MainActivity : ComponentActivity() {
                         Toast.makeText(this@MainActivity, "Mínimo 4 dígitos", Toast.LENGTH_SHORT).show()
                     }
                 }) { Text("Guardar PIN") }
+
+                Spacer(Modifier.height(24.dp))
+                HorizontalDivider()
+                Spacer(Modifier.height(20.dp))
+
+                // ── Número de confianza y nombre del dispositivo ──────────────
+                SectionLabel("Número de confianza (SMS de alerta)")
+                var trusted by remember { mutableStateOf(config.getString("trusted_number", "") ?: "") }
+                OutlinedTextField(
+                    value           = trusted,
+                    onValueChange   = { trusted = it },
+                    label           = { Text("Ej: +52 55 1234 5678") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    singleLine      = true,
+                    modifier        = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(8.dp))
+
+                SectionLabel("Nombre del dispositivo (opcional)")
+                var deviceName by remember { mutableStateOf(config.getString("device_name", "") ?: "") }
+                OutlinedTextField(
+                    value         = deviceName,
+                    onValueChange = { deviceName = it },
+                    label         = { Text("Ej: Pixel de Óscar") },
+                    singleLine    = true,
+                    modifier      = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(8.dp))
+                Button(onClick = {
+                    config.edit()
+                        .putString("trusted_number", trusted.trim())
+                        .putString("device_name", deviceName.trim())
+                        .apply()
+                    Toast.makeText(this@MainActivity, "Datos guardados", Toast.LENGTH_SHORT).show()
+                }) { Text("Guardar") }
 
                 Spacer(Modifier.height(24.dp))
                 HorizontalDivider()
