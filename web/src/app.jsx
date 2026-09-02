@@ -229,33 +229,6 @@ function App() {
     });
   }, []);
 
-  // ── Fetch history ─────────────────────────────────────────────────────
-  const fetchHistory = React.useCallback(async () => {
-    try {
-      const history = await tracerApiFetch('/api/location/history?limit=100');
-      if (!history || history.length === 0) { setHistoryItems([]); return; }
-
-      const seen = new Set(), unique = [];
-      for (const r of history) {
-        const key = `${r.latitude.toFixed(3)},${r.longitude.toFixed(3)}`;
-        if (!seen.has(key)) { seen.add(key); unique.push(r); if (unique.length >= 20) break; }
-      }
-
-      const geocoded = await Promise.all(unique.map(r =>
-        tracerReverseGeocode(r.latitude, r.longitude).catch(() => ({
-          name: `${r.latitude.toFixed(4)}, ${r.longitude.toFixed(4)}`, sub: '',
-        }))
-      ));
-
-      setHistoryItems(unique.map((r, i) => ({
-        lat: r.latitude, lon: r.longitude,
-        name: geocoded[i].name, sub: geocoded[i].sub,
-        ts: tracerFormatHistoryTime(r.timestamp),
-        timestamp: r.timestamp,
-      })));
-    } catch {}
-  }, []);
-
   // Deriva el estado real de los toggles (alert/keyguard/flash/vibrate) a
   // partir del historial de comandos (más reciente primero).
   const syncTogglesFromHistory = React.useCallback((history) => {
@@ -436,17 +409,27 @@ function App() {
           const key = `${r.latitude.toFixed(3)},${r.longitude.toFixed(3)}`;
           if (!seen.has(key)) { seen.add(key); unique.push(r); if (unique.length >= 20) break; }
         }
-        const geocoded = await Promise.all(unique.map(r =>
-          tracerReverseGeocode(r.latitude, r.longitude).catch(() => ({
-            name: `${r.latitude.toFixed(4)}, ${r.longitude.toFixed(4)}`, sub: '',
-          }))
-        ));
-        setHistoryItems(unique.map((r, i) => ({
+        // Render inmediato con coordenadas; el nombre real llega por geocodificación.
+        const baseItems = unique.map(r => ({
           lat: r.latitude, lon: r.longitude,
-          name: geocoded[i].name, sub: geocoded[i].sub,
+          name: `${r.latitude.toFixed(4)}, ${r.longitude.toFixed(4)}`, sub: '',
           ts: tracerFormatHistoryTime(r.timestamp),
           timestamp: r.timestamp,
-        })));
+        }));
+        setHistoryItems(baseItems);
+        // Geocodificar en segundo plano (cola serial, respeta el rate limit).
+        unique.forEach((r, i) => {
+          tracerReverseGeocode(r.latitude, r.longitude).then(g => {
+            setHistoryItems(prev => {
+              if (prev[i] && prev[i].timestamp === baseItems[i].timestamp) {
+                const next = prev.slice();
+                next[i] = { ...next[i], name: g.name, sub: g.sub };
+                return next;
+              }
+              return prev;
+            });
+          });
+        });
       }
     } catch {
       setStatus(false);

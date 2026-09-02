@@ -1,5 +1,6 @@
-// Stylized SVG map for Tracer. Pseudo-realistic streets, blocks, parks, water.
-// Coordinate space is 0..1000 in each axis; consumers pass viewBox/translate to pan/zoom.
+// Fondo SVG decorativo y abstracto (calles/manzanas estilizadas, sin nombres
+// reales ni relación con una ubicación concreta). Solo backdrop; el mapa real
+// es Leaflet. Coordenadas 0..1000 en cada eje.
 
 function TracerMap({ accent = '#2563EB', dark = false }) {
   const land = dark ? '#0F1115' : '#F2F1EC';
@@ -10,7 +11,6 @@ function TracerMap({ accent = '#2563EB', dark = false }) {
   const minor = dark ? '#181C22' : '#F7F6F1';
   const park = dark ? '#11261A' : '#DDE9D0';
   const water = dark ? '#0E2030' : '#C9DDEE';
-  const label = dark ? '#5A6472' : '#9A9586';
 
   return (
     <svg viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice" style={{ width: '100%', height: '100%', display: 'block' }}>
@@ -130,15 +130,7 @@ function TracerMap({ accent = '#2563EB', dark = false }) {
       <path d="M -20 540 Q 400 480 700 380 T 1020 200" fill="none" stroke={road} strokeWidth="12" strokeLinecap="round" />
       <path d="M -20 540 Q 400 480 700 380 T 1020 200" fill="none" stroke={accent} strokeWidth="1.5" strokeDasharray="4 6" opacity="0.6" />
 
-      {/* Labels */}
-      <g fontFamily="Geist, system-ui, sans-serif" fill={label} fontSize="11" letterSpacing="1.5" textTransform="uppercase">
-        <text x="780" y="170" textAnchor="middle" style={{ textTransform: 'uppercase' }}>Parque Lincoln</text>
-        <text x="160" y="900" textAnchor="middle">Lago</text>
-        <text x="500" y="800" textAnchor="middle">Río Becerra</text>
-        <text x="540" y="240" textAnchor="middle" fontWeight="500" fill={dark ? '#7C8696' : '#7A7568'}>Av. Reforma</text>
-        <text x="540" y="450" textAnchor="middle" fontWeight="500" fill={dark ? '#7C8696' : '#7A7568'}>Av. Chapultepec</text>
-        <text x="244" y="670" fontWeight="500" fill={dark ? '#7C8696' : '#7A7568'}>Av. Insurgentes</text>
-      </g>
+      {/* Sin etiquetas: es un fondo abstracto, no un mapa de un lugar real. */}
     </svg>
   );
 }

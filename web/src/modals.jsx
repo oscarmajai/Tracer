@@ -115,35 +115,20 @@ function LostModal({ open, device, onClose, onConfirm }) {
         {step === 1 && (
           <>
             <p className="modal-lead">
-              El dispositivo se bloqueará de inmediato y mostrará tu mensaje en la pantalla.
-              También podrás rastrearlo con mayor precisión y desactivar Google Pay.
+              El dispositivo se bloqueará (comando LOCK vía device admin) y mostrará
+              tu mensaje en la pantalla de bloqueo.
             </p>
 
             <div className="form-grid">
               <label className="form-field">
-                <span>Número de contacto</span>
+                <span>Número de contacto (opcional)</span>
                 <input value={phone} onChange={(e) => setPhone(e.target.value)} />
-                <small>Aparecerá como botón "Llamar" en la pantalla bloqueada.</small>
+                <small>Se incluye en el mensaje de la pantalla bloqueada.</small>
               </label>
               <label className="form-field">
                 <span>Mensaje en pantalla</span>
                 <textarea rows={3} value={message} onChange={(e) => setMessage(e.target.value)} />
                 <small>{message.length} / 240 caracteres</small>
-              </label>
-            </div>
-
-            <div className="checkbox-row">
-              <label className="checkbox">
-                <input type="checkbox" defaultChecked />
-                <span>Notificarme cuando se conecte a una red</span>
-              </label>
-              <label className="checkbox">
-                <input type="checkbox" defaultChecked />
-                <span>Desactivar Google Pay y tarjetas guardadas</span>
-              </label>
-              <label className="checkbox">
-                <input type="checkbox" defaultChecked />
-                <span>Activar Factory Reset Protection (anti-reseteo)</span>
               </label>
             </div>
           </>

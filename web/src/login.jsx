@@ -150,9 +150,6 @@ function LoginScreen({ onLogin }) {
 
         <div className="login-foot">
           <span>Tu cuenta personal de Tracer</span>
-          <span className="login-status">
-            <span className="status-dot status-dot-on" /> Servicio en línea
-          </span>
         </div>
 
         {showHint && isIdle && (
@@ -163,7 +160,7 @@ function LoginScreen({ onLogin }) {
       </div>
 
       <div className="login-foot-credits">
-        <span>Tracer · v2.4.1</span>
+        <span>Tracer</span>
       </div>
     </div>
   );
