@@ -142,11 +142,6 @@ function MapView({ devices, selectedId, setSelectedId, ringing, onAction, status
               <IconTarget width={14} height={14} />
             </button>
           </div>
-          <div className="map-control-group">
-            <button className="map-control is-on" title="Calles">
-              <IconLayers width={14} height={14} />
-            </button>
-          </div>
         </div>
       </div>
 
@@ -389,7 +384,7 @@ function ConnPill({ status, lastPollAt }) {
 function SmsFallbackPanel({ lastPollAt }) {
   const [open, setOpen] = React.useState(false);
   const [phone, setPhone] = React.useState(() => localStorage.getItem('tracer_device_phone') || '');
-  const [pin, setPin] = React.useState(() => localStorage.getItem('tracer_command_pin') || '1234');
+  const [pin, setPin] = React.useState(() => localStorage.getItem('tracer_command_pin') || '');
   const [copied, setCopied] = React.useState('');
 
   const savePhone = (v) => { setPhone(v); localStorage.setItem('tracer_device_phone', v); };
@@ -408,7 +403,7 @@ function SmsFallbackPanel({ lastPollAt }) {
     return phone ? `sms:${phone}?body=${body}` : null;
   };
 
-  const quickCmds = ['RING', 'LOCATE', 'LOCK Dispositivo perdido', 'STATUS', 'ALERT_ON'];
+  const quickCmds = ['LOCATE', 'RING', 'ALERT_ON', 'LOCK Dispositivo perdido', 'PHOTO', 'STATUS'];
 
   const secAgo = lastPollAt ? Math.round((Date.now() - new Date(lastPollAt)) / 1000) : null;
   const lastContactLabel = secAgo === null ? '—' :

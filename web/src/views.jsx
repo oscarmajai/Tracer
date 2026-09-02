@@ -274,25 +274,6 @@ function NotificationsView({ notifications, devices, onMarkRead, onClearAll }) {
   );
 }
 
-function ShareView({ contacts, onToggle }) {
-  return (
-    <div className="view-pad">
-      <TracerTopBar
-        title="Compartir ubicación"
-        subtitle="Personas que pueden ver dónde están tus dispositivos"
-      />
-      <div className="share-grid">
-        <div className="share-side" style={{ gridColumn: '1 / -1' }}>
-          <div className="info-card">
-            <div className="info-card-title">Función no disponible</div>
-            <p>La función de compartir ubicación con contactos no está disponible en esta versión.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function SettingsView({ username }) {
   const [notifs, setNotifs] = React.useState(
     typeof Notification !== 'undefined' && Notification.permission === 'granted'
@@ -301,7 +282,7 @@ function SettingsView({ username }) {
     () => localStorage.getItem('tracer_device_phone') || ''
   );
   const [commandPin, setCommandPin] = React.useState(
-    () => localStorage.getItem('tracer_command_pin') || '1234'
+    () => localStorage.getItem('tracer_command_pin') || ''
   );
 
   const savePhone = (v) => { setDevicePhone(v); localStorage.setItem('tracer_device_phone', v); };
@@ -322,10 +303,10 @@ function SettingsView({ username }) {
           <SettingsRow label="Usuario" value={username || '—'} />
         </SettingsSection>
 
-        <SettingsSection title="Fallback SMS">
+        <SettingsSection title="Fallback SMS (solo este navegador)">
           <SettingsInputRow
             label="Número del dispositivo"
-            help="Número de la SIM del dispositivo rastreado. Se usa para generar SMS de comandos cuando no hay internet."
+            help="Se usa solo aquí para armar los SMS del panel de fallback cuando no hay internet. No se envía al servidor."
             value={devicePhone}
             onChange={savePhone}
             placeholder="+521234567890"
@@ -333,10 +314,10 @@ function SettingsView({ username }) {
           />
           <SettingsInputRow
             label="PIN de comandos SMS"
-            help="El PIN configurado en la app Android para autenticar comandos por SMS."
+            help="Copiá el mismo PIN que configuraste en la app Android. Se guarda solo en este navegador para prellenar los SMS."
             value={commandPin}
             onChange={savePin}
-            placeholder="1234"
+            placeholder="(el de la app)"
             type="text"
           />
         </SettingsSection>
@@ -420,6 +401,5 @@ function Toggle({ on, onChange }) {
 window.DevicesView = DevicesView;
 window.HistoryView = HistoryView;
 window.NotificationsView = NotificationsView;
-window.ShareView = ShareView;
 window.SettingsView = SettingsView;
 window.TracerToggle = Toggle;

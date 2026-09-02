@@ -51,32 +51,47 @@ async function apiFetch(path, options = {}) {
 }
 
 const geocodeCache = new Map();
+// Cola serial: Nominatim pide máx 1 req/s y nada de ráfagas paralelas.
+let geocodeChain = Promise.resolve();
 
-async function reverseGeocode(lat, lon) {
+function coordsFallback(lat, lon) {
+  return { name: `${lat.toFixed(4)}, ${lon.toFixed(4)}`, sub: '' };
+}
+
+async function fetchGeocode(lat, lon) {
+  // El navegador prohíbe fijar User-Agent, así que no se manda.
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=16`
+  );
+  if (!res.ok) throw new Error('geocode failed');
+  const data = await res.json();
+  const addr = data.address || {};
+  const name =
+    addr.road || addr.neighbourhood || addr.suburb ||
+    addr.city_district || addr.city ||
+    (data.display_name || '').split(',')[0] ||
+    `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+  const sub = addr.city || addr.town || addr.village || addr.state || '';
+  return { name, sub };
+}
+
+function reverseGeocode(lat, lon) {
   const key = `${lat.toFixed(3)},${lon.toFixed(3)}`;
-  if (geocodeCache.has(key)) return geocodeCache.get(key);
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
-      { headers: { 'User-Agent': 'Tracer/1.0 (phone-tracker-app)' } }
-    );
-    if (!res.ok) throw new Error('geocode failed');
-    const data = await res.json();
-    const addr = data.address || {};
-    const name =
-      addr.road || addr.neighbourhood || addr.suburb ||
-      addr.city_district || addr.city ||
-      (data.display_name || '').split(',')[0] ||
-      `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
-    const sub = addr.city || addr.town || addr.village || addr.state || '';
-    const result = { name, sub };
+  if (geocodeCache.has(key)) return Promise.resolve(geocodeCache.get(key));
+
+  geocodeChain = geocodeChain.then(async () => {
+    if (geocodeCache.has(key)) return;
+    let result;
+    try {
+      result = await fetchGeocode(lat, lon);
+    } catch {
+      result = coordsFallback(lat, lon);
+    }
     geocodeCache.set(key, result);
-    return result;
-  } catch {
-    const result = { name: `${lat.toFixed(4)}, ${lon.toFixed(4)}`, sub: '' };
-    geocodeCache.set(key, result);
-    return result;
-  }
+    await new Promise(r => setTimeout(r, 1100)); // respetar el rate limit
+  });
+
+  return geocodeChain.then(() => geocodeCache.get(key) || coordsFallback(lat, lon));
 }
 
 // Descarga un archivo autenticado (foto/audio) y devuelve un blob URL.
