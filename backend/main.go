@@ -2,17 +2,20 @@ package main
 
 import (
 	"bufio"
+	"crypto/subtle"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
 	"math"
 	"os"
+	"os/signal"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -106,16 +109,36 @@ func loadDotEnv(paths ...string) {
 
 // ── WebSocket Hub ─────────────────────────────────────────────────────────────
 
+// wsClient: cada cliente tiene su propia goroutine de escritura con un canal
+// buffered. broadcast nunca bloquea: si el buffer de un cliente se llena
+// (cliente lento/muerto) se lo descarta en vez de frenar a todos.
 type wsClient struct {
-	conn *fiberws.Conn
-	mu   sync.Mutex
+	conn   *fiberws.Conn
+	sendCh chan []byte
+	once   sync.Once
 }
 
-func (c *wsClient) send(data []byte) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	_ = c.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-	_ = c.conn.WriteMessage(fiberws.TextMessage, data)
+func (c *wsClient) enqueue(data []byte) bool {
+	select {
+	case c.sendCh <- data:
+		return true
+	default:
+		return false
+	}
+}
+
+func (c *wsClient) writer() {
+	for data := range c.sendCh {
+		_ = c.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+		if err := c.conn.WriteMessage(fiberws.TextMessage, data); err != nil {
+			break
+		}
+	}
+	c.conn.Close()
+}
+
+func (c *wsClient) close() {
+	c.once.Do(func() { close(c.sendCh) })
 }
 
 var (
@@ -146,11 +169,14 @@ func broadcast(eventType string, payload interface{}) {
 		return
 	}
 	hubMu.RLock()
-	clients := make([]*wsClient, len(hub))
-	copy(clients, hub)
+	clients := append([]*wsClient(nil), hub...)
 	hubMu.RUnlock()
 	for _, c := range clients {
-		c.send(msg)
+		if !c.enqueue(msg) {
+			log.Printf("ws: cliente lento, desconectando")
+			hubRemove(c)
+			c.close()
+		}
 	}
 }
 
@@ -359,6 +385,11 @@ func startWriteWorker() {
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
+// constEq compara en tiempo constante para no filtrar el secreto por timing.
+func constEq(a, b string) bool {
+	return subtle.ConstantTimeCompare([]byte(a), []byte(b)) == 1
+}
+
 func postLogin(c *fiber.Ctx) error {
 	var body struct {
 		Username string `json:"username"`
@@ -367,14 +398,16 @@ func postLogin(c *fiber.Ctx) error {
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid body"})
 	}
-	if body.Username != cfg.Username || body.Password != cfg.Password {
+	userOK := constEq(body.Username, cfg.Username)
+	passOK := constEq(body.Password, cfg.Password)
+	if !userOK || !passOK {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "invalid credentials"})
 	}
 	return c.JSON(fiber.Map{"token": cfg.APIToken})
 }
 
 func authMiddleware(c *fiber.Ctx) error {
-	if c.Get("Authorization") != "Bearer "+cfg.APIToken {
+	if !constEq(c.Get("Authorization"), "Bearer "+cfg.APIToken) {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
 	}
 	return c.Next()
@@ -386,6 +419,13 @@ func postLocation(c *fiber.Ctx) error {
 	var payload LocationPayload
 	if err := c.BodyParser(&payload); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid body"})
+	}
+	if payload.Latitude < -90 || payload.Latitude > 90 ||
+		payload.Longitude < -180 || payload.Longitude > 180 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "coordinates out of range"})
+	}
+	if payload.BatteryLevel < -1 || payload.BatteryLevel > 100 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "battery_level out of range"})
 	}
 	if payload.Timestamp == "" {
 		payload.Timestamp = time.Now().UTC().Format(time.RFC3339)
@@ -873,7 +913,11 @@ func getAudioFile(c *fiber.Ctx) error {
 	if !validAudioFilename.MatchString(filename) {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid filename"})
 	}
-	return c.SendFile(fmt.Sprintf("%s/%s", cfg.AudioDir, filename))
+	path := fmt.Sprintf("%s/%s", cfg.AudioDir, filename)
+	if _, err := os.Stat(path); err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "not found"})
+	}
+	return c.SendFile(path)
 }
 
 // ── Alert handler ─────────────────────────────────────────────────────────────
@@ -971,17 +1015,22 @@ func getPhotoFile(c *fiber.Ctx) error {
 	if !validFilename.MatchString(filename) {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid filename"})
 	}
-	return c.SendFile(fmt.Sprintf("%s/%s", cfg.PhotosDir, filename))
+	path := fmt.Sprintf("%s/%s", cfg.PhotosDir, filename)
+	if _, err := os.Stat(path); err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "not found"})
+	}
+	return c.SendFile(path)
 }
 
 // ── WebSocket handler ─────────────────────────────────────────────────────────
 
 func handleWS(conn *fiberws.Conn) {
-	client := &wsClient{conn: conn}
+	client := &wsClient{conn: conn, sendCh: make(chan []byte, 64)}
 	hubAdd(client)
+	go client.writer()
 	defer func() {
 		hubRemove(client)
-		conn.Close()
+		client.close()
 	}()
 
 	// Enviar estado actual al cliente recién conectado
@@ -992,7 +1041,7 @@ func handleWS(conn *fiberws.Conn) {
 	`)
 	if r, err := scanLocation(row); err == nil {
 		if data, err := json.Marshal(map[string]interface{}{"type": "location", "data": r}); err == nil {
-			client.send(data)
+			client.enqueue(data)
 		}
 	}
 
@@ -1023,7 +1072,13 @@ func main() {
 	startWriteWorker()
 
 	app := fiber.New(fiber.Config{DisableStartupMessage: false})
-	app.Use(cors.New())
+	// Auth por Bearer token (no cookies), así que un origen abierto es aceptable;
+	// se declara explícito para dejar claro el contrato.
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "*",
+		AllowMethods: "GET,POST,DELETE,OPTIONS",
+		AllowHeaders: "Authorization,Content-Type",
+	}))
 
 	// Panel web estático
 	app.Static("/", "./web")
@@ -1031,7 +1086,7 @@ func main() {
 	// WebSocket — auth por query param (los browsers no pueden enviar headers en WS)
 	app.Use("/ws", func(c *fiber.Ctx) error {
 		if fiberws.IsWebSocketUpgrade(c) {
-			if c.Query("token") != cfg.APIToken {
+			if !constEq(c.Query("token"), cfg.APIToken) {
 				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
 			}
 			return c.Next()
@@ -1072,5 +1127,21 @@ func main() {
 	api.Post("/alert", postDeviceAlert)
 	api.Get("/alert/history", getAlertHistory)
 
-	log.Fatal(app.Listen(":" + cfg.Port))
+	// Apagado ordenado: cierra el listener, hace checkpoint del WAL y cierra la DB.
+	go func() {
+		sigCh := make(chan os.Signal, 1)
+		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+		<-sigCh
+		log.Println("apagando…")
+		_ = app.Shutdown()
+		if _, err := db.Exec(`PRAGMA wal_checkpoint(TRUNCATE)`); err != nil {
+			log.Printf("wal checkpoint: %v", err)
+		}
+		_ = db.Close()
+		os.Exit(0)
+	}()
+
+	if err := app.Listen(":" + cfg.Port); err != nil {
+		log.Fatalf("servidor detenido: %v", err)
+	}
 }
