@@ -65,9 +65,9 @@ class MainActivity : ComponentActivity() {
 
     private val notifPermLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { requestCameraPermissions() }
+    ) { requestCapturePermissions() }
 
-    private val cameraPermLauncher = registerForActivityResult(
+    private val capturePermLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { startTracerService() }
 
@@ -284,14 +284,17 @@ class MainActivity : ComponentActivity() {
                 return
             }
         }
-        requestCameraPermissions()
+        requestCapturePermissions()
     }
 
-    private fun requestCameraPermissions() {
-        val missing = arrayOf(Manifest.permission.CAMERA)
+    // Cámara (comando PHOTO) y micrófono (AUDIO / SILENT_CALL). Sin RECORD_AUDIO
+    // en runtime, MediaRecorder falla siempre y el foreground service de tipo
+    // micrófono no puede arrancar en Android 14+.
+    private fun requestCapturePermissions() {
+        val missing = arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
             .filter { ContextCompat.checkSelfPermission(this, it) != PERMISSION_GRANTED }
         if (missing.isEmpty()) startTracerService()
-        else cameraPermLauncher.launch(missing.toTypedArray())
+        else capturePermLauncher.launch(missing.toTypedArray())
     }
 
     private fun startTracerService() {

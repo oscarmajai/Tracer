@@ -1,10 +1,13 @@
 package com.tracer.app.service
 
+import android.Manifest
 import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
+import androidx.core.app.ServiceCompat
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
@@ -154,7 +157,7 @@ class TracerLocationService : Service() {
         apiService  = TracerApiService.create()
         simManager  = SimManager(this)
         buildLocationCallback()
-        startForeground(NOTIFICATION_ID, buildNotification())
+        startForegroundSafely(0)
         requestLocationUpdates(isAlertMode)
         setupSignalMonitoring()
         setupSimMonitoring()
@@ -315,10 +318,25 @@ class TracerLocationService : Service() {
     // ── Foto ──────────────────────────────────────────────────────────────────
 
     private suspend fun captureAndUploadPhoto(replyTo: String, cmdId: Long? = null) {
-        val file: File? = withContext(Dispatchers.Main) {
-            suspendCancellableCoroutine { cont ->
-                PhotoCapture(this@TracerLocationService).capture { f -> cont.resume(f) }
+        if (!hasPermission(Manifest.permission.CAMERA)) {
+            val msg = "Tracer PHOTO: sin permiso de cámara. Abrí Tracer para concederlo."
+            if (cmdId != null) {
+                runCatching { apiService.postCommandResult(TracerApiService.AUTH_TOKEN, cmdId, CommandResultPayload(msg)) }
+            } else {
+                CommandHandler.sendSms(this, replyTo, msg)
             }
+            return
+        }
+
+        startForegroundSafely(fgsCamera)
+        val file: File? = try {
+            withContext(Dispatchers.Main) {
+                suspendCancellableCoroutine { cont ->
+                    PhotoCapture(this@TracerLocationService).capture { f -> cont.resume(f) }
+                }
+            }
+        } finally {
+            startForegroundSafely(0)
         }
 
         var resultMsg: String
@@ -352,10 +370,25 @@ class TracerLocationService : Service() {
     // ── Audio ─────────────────────────────────────────────────────────────────
 
     private suspend fun recordAndUploadAudio(replyTo: String, cmdId: Long?, durationSec: Int) {
-        val file: File? = withContext(Dispatchers.Main) {
-            suspendCancellableCoroutine { cont ->
-                AudioRecorder(this@TracerLocationService).record(durationSec) { f -> cont.resume(f) }
+        if (!hasPermission(Manifest.permission.RECORD_AUDIO)) {
+            val msg = "Tracer AUDIO: sin permiso de micrófono. Abrí Tracer para concederlo."
+            if (cmdId != null) {
+                runCatching { apiService.postCommandResult(TracerApiService.AUTH_TOKEN, cmdId, CommandResultPayload(msg)) }
+            } else {
+                CommandHandler.sendSms(this, replyTo, msg)
             }
+            return
+        }
+
+        startForegroundSafely(fgsMicrophone)
+        val file: File? = try {
+            withContext(Dispatchers.Main) {
+                suspendCancellableCoroutine { cont ->
+                    AudioRecorder(this@TracerLocationService).record(durationSec) { f -> cont.resume(f) }
+                }
+            }
+        } finally {
+            startForegroundSafely(0)
         }
 
         val resultMsg: String
@@ -674,6 +707,34 @@ class TracerLocationService : Service() {
 
     private fun readAndroidId(): String =
         Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) ?: "unknown"
+
+    // ── Foreground service: tipo dinámico ─────────────────────────────────────
+    // El servicio es siempre "location". Durante una captura se promociona a
+    // location|camera o location|microphone y se vuelve a location al terminar.
+    // En Android 14+ un startForeground de 2 args con varios tipos en el
+    // manifest exige TODOS los permisos; pasando solo los tipos activos evita
+    // el SecurityException cuando falta CAMERA o RECORD_AUDIO.
+
+    // Valores de android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_*
+    private val fgsLocation = 0x00000008
+    private val fgsCamera = 0x00000040     // API 30+
+    private val fgsMicrophone = 0x00000080 // API 30+
+
+    private fun startForegroundSafely(extraType: Int) {
+        val type = when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> fgsLocation or extraType
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> fgsLocation
+            else -> 0
+        }
+        try {
+            ServiceCompat.startForeground(this, NOTIFICATION_ID, buildNotification(), type)
+        } catch (e: Exception) {
+            Log.e(TAG, "startForeground(type=$type) falló: ${e.message}")
+        }
+    }
+
+    private fun hasPermission(perm: String): Boolean =
+        ContextCompat.checkSelfPermission(this, perm) == PackageManager.PERMISSION_GRANTED
 
     private fun buildNotification(): Notification {
         val pendingIntent = PendingIntent.getActivity(

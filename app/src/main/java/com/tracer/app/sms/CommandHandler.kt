@@ -190,11 +190,7 @@ class CommandHandler(
             action = TracerLocationService.ACTION_TAKE_PHOTO
             putExtra(TracerLocationService.EXTRA_REPLY_TO, sender)
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(intent)
-        } else {
-            context.startService(intent)
-        }
+        startTracerService(intent)
     }
 
     private fun handleCallback(sender: String, args: List<String>) {
@@ -374,11 +370,7 @@ class CommandHandler(
         val intent = Intent(context, TracerLocationService::class.java).apply {
             action = TracerLocationService.ACTION_FORCE_LOCATE
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(intent)
-        } else {
-            context.startService(intent)
-        }
+        startTracerService(intent)
         reply(sender, "Tracer GPS_HIGH: ubicación forzada, polling 10s activado")
     }
 
@@ -417,11 +409,7 @@ class CommandHandler(
             putExtra(TracerLocationService.EXTRA_REPLY_TO, sender)
             putExtra(TracerLocationService.EXTRA_DURATION_SEC, duration)
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(intent)
-        } else {
-            context.startService(intent)
-        }
+        startTracerService(intent)
         if (sender != "remote") reply(sender, "Tracer AUDIO: grabando ${duration}s...")
     }
 
@@ -431,11 +419,7 @@ class CommandHandler(
             putExtra(TracerLocationService.EXTRA_REPLY_TO, sender)
             putExtra(TracerLocationService.EXTRA_DURATION_SEC, 60)
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(intent)
-        } else {
-            context.startService(intent)
-        }
+        startTracerService(intent)
         if (sender != "remote") reply(sender, "Tracer SILENT_CALL: grabando 60s...")
     }
 
@@ -527,6 +511,21 @@ class CommandHandler(
             }
         } catch (e: Exception) {
             "red:?"
+        }
+    }
+
+    // Arranca TracerLocationService tolerando el fallo: en Android 14+ un
+    // startForegroundService desde background (p. ej. SMS recibido) puede lanzar
+    // ForegroundServiceStartNotAllowedException. Preferible loguear a crashear.
+    private fun startTracerService(intent: Intent) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "No se pudo arrancar el servicio (${intent.action}): ${e.message}")
         }
     }
 
