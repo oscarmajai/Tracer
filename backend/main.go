@@ -293,6 +293,7 @@ func initDatabase() {
 		`ALTER TABLE locations ADD COLUMN device_name  TEXT    DEFAULT ''`,
 		`ALTER TABLE locations ADD COLUMN is_charging  INTEGER DEFAULT 0`,
 		`ALTER TABLE commands  ADD COLUMN result       TEXT    DEFAULT ''`,
+		`ALTER TABLE commands  ADD COLUMN dispatched_at TEXT`,
 	}
 	for _, s := range migrations {
 		if _, err := db.Exec(s); err != nil && !strings.Contains(err.Error(), "duplicate column name") {
@@ -473,8 +474,24 @@ func postCommand(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"id": id, "status": "pending"})
 }
 
+// commandDispatchTTL: tiempo máximo que un comando puede quedar en estado
+// 'dispatched' sin resultado antes de volver a 'pending' para reintentarlo
+// (p. ej. si la app se reinició a mitad de una captura de audio/foto).
+const commandDispatchTTL = 10 * time.Minute
+
 func getPendingCommands(c *fiber.Ctx) error {
 	recordDevicePoll()
+
+	// Re-armar comandos despachados que llevan demasiado tiempo sin resultado.
+	staleBefore := time.Now().UTC().Add(-commandDispatchTTL).Format(time.RFC3339)
+	if _, err := db.Exec(
+		`UPDATE commands SET status='pending', dispatched_at=NULL
+		 WHERE status='dispatched' AND (dispatched_at IS NULL OR dispatched_at < ?)`,
+		staleBefore,
+	); err != nil {
+		log.Printf("re-arm dispatched: %v", err)
+	}
+
 	rows, err := db.Query(`
 		SELECT id, command, args, status, created_at
 		FROM commands WHERE status = 'pending' ORDER BY id ASC
@@ -482,15 +499,30 @@ func getPendingCommands(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "database error"})
 	}
-	defer rows.Close()
 
 	commands := make([]CommandRecord, 0)
+	ids := make([]interface{}, 0)
 	for rows.Next() {
 		var r CommandRecord
 		if err := rows.Scan(&r.ID, &r.Command, &r.Args, &r.Status, &r.CreatedAt); err != nil {
 			continue
 		}
 		commands = append(commands, r)
+		ids = append(ids, r.ID)
+	}
+	rows.Close() // cerrar antes del UPDATE: SetMaxOpenConns(1)
+
+	// Marcar como 'dispatched' para no re-entregarlos en el siguiente poll.
+	if len(ids) > 0 {
+		now := time.Now().UTC().Format(time.RFC3339)
+		placeholders := strings.TrimSuffix(strings.Repeat("?,", len(ids)), ",")
+		args := append([]interface{}{now}, ids...)
+		if _, err := db.Exec(
+			`UPDATE commands SET status='dispatched', dispatched_at=? WHERE id IN (`+placeholders+`)`,
+			args...,
+		); err != nil {
+			log.Printf("mark dispatched: %v", err)
+		}
 	}
 	return c.JSON(commands)
 }
@@ -543,7 +575,8 @@ func postCommandResult(c *fiber.Ctx) error {
 
 	now := time.Now().UTC().Format(time.RFC3339)
 	res, err := db.Exec(
-		`UPDATE commands SET status='executed', executed_at=?, result=? WHERE id=? AND status='pending'`,
+		`UPDATE commands SET status='executed', executed_at=?, result=?
+		 WHERE id=? AND status IN ('pending', 'dispatched')`,
 		now, body.Result, id,
 	)
 	if err != nil {
@@ -561,13 +594,18 @@ func postCommandResult(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusOK)
 }
 
+// ackCommand: la app confirma que recibió el comando y lo va a ejecutar.
+// Lo pasa a 'dispatched' (no 'executed'): el resultado real llega luego por
+// POST /api/command/:id/result. Sirve para que un comando asíncrono (foto,
+// audio) no se re-entregue en el siguiente poll.
 func ackCommand(c *fiber.Ctx) error {
 	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid id"})
 	}
 	result, err := db.Exec(
-		`UPDATE commands SET status='executed', executed_at=? WHERE id=? AND status='pending'`,
+		`UPDATE commands SET status='dispatched', dispatched_at=?
+		 WHERE id=? AND status IN ('pending', 'dispatched')`,
 		time.Now().UTC().Format(time.RFC3339), id,
 	)
 	if err != nil {
